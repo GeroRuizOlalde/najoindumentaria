@@ -4,19 +4,24 @@ import type { ProductStatus } from "@/generated/prisma/client";
 interface ProductFilters {
   brandId?: string;
   categoryId?: string;
+  brandSlug?: string;
+  categorySlug?: string;
   status?: ProductStatus;
   featured?: boolean;
   search?: string;
+  sort?: string;
   page?: number;
   limit?: number;
 }
 
 export async function getProducts(filters: ProductFilters = {}) {
-  const { brandId, categoryId, status, featured, search, page = 1, limit = 12 } = filters;
+  const { brandId, categoryId, brandSlug, categorySlug, status, featured, search, sort, page = 1, limit = 12 } = filters;
 
   const where = {
     ...(brandId && { brandId }),
     ...(categoryId && { categoryId }),
+    ...(brandSlug && { brand: { slug: brandSlug } }),
+    ...(categorySlug && { category: { slug: categorySlug } }),
     ...(status && { status }),
     ...(featured !== undefined && { featured }),
     ...(search && {
@@ -27,10 +32,18 @@ export async function getProducts(filters: ProductFilters = {}) {
     }),
   };
 
+  const orderBy = sort === "price_asc"
+    ? [{ price: "asc" as const }]
+    : sort === "price_desc"
+    ? [{ price: "desc" as const }]
+    : sort === "newest"
+    ? [{ createdAt: "desc" as const }]
+    : [{ sortOrder: "asc" as const }, { createdAt: "desc" as const }];
+
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
       include: {

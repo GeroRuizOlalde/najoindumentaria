@@ -4,6 +4,16 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 
+export function Accordion({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={cn("divide-y divide-border", className)}>{children}</div>;
+}
+
 interface AccordionItemProps {
   title: string;
   children: React.ReactNode;

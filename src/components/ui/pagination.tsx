@@ -2,11 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  onPageChange?: (page: number) => void;
+  buildUrl?: (page: number) => string;
   className?: string;
 }
 
@@ -14,6 +16,7 @@ export function Pagination({
   currentPage,
   totalPages,
   onPageChange,
+  buildUrl,
   className,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
@@ -35,16 +38,66 @@ export function Pagination({
     pages.push(totalPages);
   }
 
-  return (
-    <nav className={cn("flex items-center gap-1", className)}>
+  const baseClass =
+    "inline-flex h-9 w-9 items-center justify-center text-sm transition-colors";
+
+  function PageItem({ page }: { page: number }) {
+    const active = currentPage === page;
+    const cls = cn(
+      baseClass,
+      active ? "bg-black text-white" : "text-gray-text hover:text-black"
+    );
+
+    if (buildUrl) {
+      return (
+        <Link href={buildUrl(page)} className={cls}>
+          {page}
+        </Link>
+      );
+    }
+    return (
+      <button type="button" onClick={() => onPageChange?.(page)} className={cls}>
+        {page}
+      </button>
+    );
+  }
+
+  function NavButton({
+    page,
+    disabled,
+    children,
+  }: {
+    page: number;
+    disabled: boolean;
+    children: React.ReactNode;
+  }) {
+    const cls =
+      "inline-flex h-9 w-9 items-center justify-center text-gray-text transition-colors hover:text-black disabled:opacity-30";
+
+    if (buildUrl && !disabled) {
+      return (
+        <Link href={buildUrl(page)} className={cls}>
+          {children}
+        </Link>
+      );
+    }
+    return (
       <button
         type="button"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="inline-flex h-9 w-9 items-center justify-center text-gray-text transition-colors hover:text-black disabled:opacity-30"
+        onClick={() => onPageChange?.(page)}
+        disabled={disabled}
+        className={cls}
       >
-        <ChevronLeft className="h-4 w-4" />
+        {children}
       </button>
+    );
+  }
+
+  return (
+    <nav className={cn("flex items-center justify-center gap-1", className)}>
+      <NavButton page={currentPage - 1} disabled={currentPage === 1}>
+        <ChevronLeft className="h-4 w-4" />
+      </NavButton>
 
       {pages.map((page, i) =>
         page === "..." ? (
@@ -52,30 +105,13 @@ export function Pagination({
             ...
           </span>
         ) : (
-          <button
-            key={page}
-            type="button"
-            onClick={() => onPageChange(page)}
-            className={cn(
-              "inline-flex h-9 w-9 items-center justify-center text-sm transition-colors",
-              currentPage === page
-                ? "bg-black text-white"
-                : "text-gray-text hover:text-black"
-            )}
-          >
-            {page}
-          </button>
+          <PageItem key={page} page={page} />
         )
       )}
 
-      <button
-        type="button"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="inline-flex h-9 w-9 items-center justify-center text-gray-text transition-colors hover:text-black disabled:opacity-30"
-      >
+      <NavButton page={currentPage + 1} disabled={currentPage === totalPages}>
         <ChevronRight className="h-4 w-4" />
-      </button>
+      </NavButton>
     </nav>
   );
 }

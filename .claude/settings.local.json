@@ -17,7 +17,9 @@
       "Bash(npx next:*)",
       "Bash(npm search:*)",
       "Bash(npm info:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\geror.GERO\\\\OneDrive\\\\Documentos\\\\GitHub\\\\najoindumentaria\\\\src\\\\app\\\\\\(store\\)\\\\shop\\\\categoria\\\\[slug]\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\geror.GERO\\\\OneDrive\\\\Documentos\\\\GitHub\\\\najoindumentaria\\\\src\\\\app\\\\\\(store\\)\\\\shop\\\\marca\\\\[slug]\")"
     ]
   }
 }

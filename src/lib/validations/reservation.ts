@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const reservationSchema = z.object({
   productId: z.string().min(1),
-  sizeLabel: z.string().min(1, "Seleccioná un talle"),
+  sizeId: z.string().min(1, "Seleccioná un talle"),
   name: z.string().min(2, "Nombre requerido"),
   email: z.string().email("Email inválido"),
   phone: z.string().min(8, "Teléfono requerido"),

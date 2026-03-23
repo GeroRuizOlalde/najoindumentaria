@@ -19,6 +19,7 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
+import { OrderStatusChanger } from "@/components/admin/order-status-changer";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -200,6 +201,14 @@ export default async function OrderDetailPage({ params }: Props) {
                 </p>
               )}
             </div>
+          </Card>
+
+          {/* Status changer */}
+          <Card>
+            <OrderStatusChanger
+              orderId={order.id}
+              currentStatus={order.status as OrderStatusType}
+            />
           </Card>
         </div>
       </div>
