@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
 import { defineConfig } from "prisma/config";
 
-dotenv.config({ path: ".env.local" });
+// Load .env.local for local dev; on Vercel, env vars are injected by the platform
+dotenv.config({ path: ".env.local", override: false });
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
