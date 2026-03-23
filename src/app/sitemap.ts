@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import type { MetadataRoute } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://najoindumentaria.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://najoindumentaria.vercel.app/";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [products, categories, brands] = await Promise.all([

@@ -15,7 +15,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://najoindumentaria.vercel.app/"),
   title: {
     default: "NAJO Indumentaria | Streetwear Premium",
     template: "%s | NAJO Indumentaria",
