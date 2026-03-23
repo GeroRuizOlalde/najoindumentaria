@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria\" log --oneline -5)",
+      "WebSearch",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; print\\(text[:5000]\\)\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; print\\(text[5000:12000]\\)\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; print\\(text[12000:20000]\\)\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; print\\(text[20000:28000]\\)\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; print\\(text[28000:36000]\\)\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; print\\(text[36000:44000]\\)\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); text=data[0][''''text'''']; print\\(text[44000:]\\)\")",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes)",
+      "Bash(npm install:*)",
+      "Bash(timeout 15 npx next build)",
+      "Bash(npx prisma:*)",
+      "Bash(npx next:*)",
+      "Bash(npm search:*)",
+      "Bash(npm info:*)",
+      "Bash(npm uninstall:*)"
+    ]
+  }
+}

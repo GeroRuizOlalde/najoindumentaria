@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── AUTH / USERS ────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  password      String
+  role          UserRole  @default(ADMIN)
+  image         String?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  OPERATOR
+  VIEWER
+}
+
+// ─── CATALOG ─────────────────────────────────────────────
+
+model Brand {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  logo        String?
+  description String?  @db.Text
+  banner      String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@map("brands")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  image       String?
+  description String?  @db.Text
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  brandId          String
+  categoryId       String
+  price            Decimal       @db.Decimal(10, 2)
+  compareAtPrice   Decimal?      @db.Decimal(10, 2)
+  description      String        @db.Text
+  shortDescription String?       @db.VarChar(300)
+  images           String[]
+  status           ProductStatus @default(DRAFT)
+  featured         Boolean       @default(false)
+  sortOrder        Int           @default(0)
+  metaTitle        String?       @db.VarChar(70)
+  metaDescription  String?       @db.VarChar(160)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  brand    Brand         @relation(fields: [brandId], references: [id])
+  category Category      @relation(fields: [categoryId], references: [id])
+  sizes    ProductSize[]
+  orders   Order[]
+
+  @@index([brandId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
+  @@map("products")
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model ProductSize {
+  id          String  @id @default(cuid())
+  productId   String
+  sizeLabel   String
+  isAvailable Boolean @default(true)
+  stock       Int     @default(1)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, sizeLabel])
+  @@map("product_sizes")
+}
+
+// ─── CUSTOMERS & ORDERS ──────────────────────────────────
+
+model Customer {
+  id               String           @id @default(cuid())
+  name             String
+  email            String           @unique
+  phone            String
+  province         String
+  city             String
+  address          String?          @db.Text
+  preferredContact PreferredContact @default(WHATSAPP)
+  notes            String?          @db.Text
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  orders Order[]
+
+  @@map("customers")
+}
+
+enum PreferredContact {
+  WHATSAPP
+  EMAIL
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  orderCode       String         @unique
+  customerId      String
+  productId       String
+  sizeLabel       String
+  amount          Decimal        @db.Decimal(10, 2)
+  status          OrderStatus    @default(PENDING)
+  deliveryMethod  DeliveryMethod
+  shippingAddress String?        @db.Text
+  trackingNumber  String?
+  paymentProof    String?
+  adminNotes      String?        @db.Text
+  customerNotes   String?        @db.Text
+  expiresAt       DateTime
+  paidAt          DateTime?
+  confirmedAt     DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  customer      Customer             @relation(fields: [customerId], references: [id])
+  product       Product              @relation(fields: [productId], references: [id])
+  statusHistory OrderStatusHistory[]
+
+  @@index([status])
+  @@index([orderCode])
+  @@index([customerId])
+  @@index([expiresAt])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_RECEIVED
+  CONFIRMED
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  EXPIRED
+}
+
+enum DeliveryMethod {
+  SHIPPING
+  PICKUP
+}
+
+model OrderStatusHistory {
+  id         String       @id @default(cuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note       String?      @db.Text
+  changedBy  String?
+  createdAt  DateTime     @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_status_history")
+}
+
+// ─── SITE SETTINGS ───────────────────────────────────────
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+  group String @default("general")
+
+  @@map("site_settings")
+}
