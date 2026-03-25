@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Users } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatDateAR } from "@/lib/utils";
 import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
 import { deleteAllCustomers } from "@/lib/actions/customers";
 
@@ -83,11 +82,7 @@ export default async function CustomersPage({ searchParams }: Props) {
                   <TableCell>{customer._count.orders}</TableCell>
                   <TableCell className="text-xs text-gray-text">
                     {customer.orders[0]
-                      ? format(
-                          new Date(customer.orders[0].createdAt),
-                          "dd/MM/yy",
-                          { locale: es }
-                        )
+                      ? formatDateAR(customer.orders[0].createdAt, "dd/MM/yy")
                       : "—"}
                   </TableCell>
                 </TableRow>

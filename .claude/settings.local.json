@@ -28,7 +28,14 @@
       "Bash(grep -r \"TODO\\\\|FIXME\" /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src --include=*.ts --include=*.tsx)",
       "Bash(find /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src/app/api -type f -name *.ts)",
       "Bash(node -e \":*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep -r \"Argentina\\\\|Buenos_Aires\\\\|es-AR\" /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
+      "Bash(ls -la /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src/app/\\\\\\(store\\\\\\)/)",
+      "Bash(grep -r archive-orders /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -r \"timezone\\\\|toLocaleString\\\\|toLocaleDateString\\\\|locale\" /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src --include=*.ts --include=*.tsx)",
+      "Bash(node:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

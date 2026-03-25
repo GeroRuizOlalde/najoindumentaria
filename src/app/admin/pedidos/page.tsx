@@ -2,7 +2,7 @@ import { getOrders } from "@/lib/queries/orders";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
-import { formatPriceFromDecimal } from "@/lib/utils";
+import { formatPriceFromDecimal, formatDateAR } from "@/lib/utils";
 import type { OrderStatusType } from "@/lib/constants";
 import type { OrderStatus } from "@/generated/prisma/client";
 import {
@@ -15,8 +15,6 @@ import {
 } from "@/components/ui/table";
 import { ShoppingBag, Archive } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { ArchiveOrderButton } from "@/components/admin/archive-order-button";
 
 interface Props {
@@ -159,9 +157,7 @@ export default async function OrdersPage({ searchParams }: Props) {
                     />
                   </TableCell>
                   <TableCell className="text-xs text-gray-text">
-                    {format(new Date(order.createdAt), "dd/MM/yy HH:mm", {
-                      locale: es,
-                    })}
+                    {formatDateAR(order.createdAt, "dd/MM/yy HH:mm")}
                   </TableCell>
                   <TableCell>
                     <ArchiveOrderButton

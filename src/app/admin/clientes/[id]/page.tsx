@@ -3,10 +3,8 @@ import { getCustomerById } from "@/lib/queries/customers";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardTitle } from "@/components/ui/card";
-import { formatPriceFromDecimal } from "@/lib/utils";
+import { formatPriceFromDecimal, formatDateAR } from "@/lib/utils";
 import type { OrderStatusType } from "@/lib/constants";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
 
@@ -95,9 +93,7 @@ export default async function CustomerDetailPage({ params }: Props) {
                           {formatPriceFromDecimal(Number(order.amount))}
                         </p>
                         <p className="text-xs text-gray-text">
-                          {format(new Date(order.createdAt), "dd/MM/yy", {
-                            locale: es,
-                          })}
+                          {formatDateAR(order.createdAt, "dd/MM/yy")}
                         </p>
                       </div>
                       <StatusBadge

@@ -1,8 +1,6 @@
 import { resend } from "@/lib/resend";
 import { getSettings } from "@/lib/queries/settings";
-import { formatPriceFromDecimal } from "@/lib/utils";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatPriceFromDecimal, formatDateAR } from "@/lib/utils";
 import ReservationConfirmation from "../../../emails/reservation-confirmation";
 
 interface SendReservationEmailParams {
@@ -42,7 +40,7 @@ export async function sendReservationEmail(
       bankAlias: settings.bank_alias,
       bankAccountType: settings.bank_account_type,
       bankInstructions: settings.bank_instructions,
-      expiresAt: format(params.expiresAt, "dd/MM/yyyy HH:mm", { locale: es }),
+      expiresAt: formatDateAR(params.expiresAt, "dd/MM/yyyy HH:mm"),
       whatsappNumber: settings.whatsapp_number,
     }),
   });

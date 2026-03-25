@@ -8,8 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import type { OrderStatusType } from "@/lib/constants";
 import { ORDER_STATUS_LABELS, DELIVERY_METHOD_LABELS } from "@/lib/constants";
 import type { DeliveryMethodType } from "@/lib/constants";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatDateAR } from "@/lib/utils";
 import {
   User,
   Mail,
@@ -119,11 +118,7 @@ export default async function OrderDetailPage({ params }: Props) {
                       </p>
                     )}
                     <p className="text-xs text-gray-light mt-0.5">
-                      {format(
-                        new Date(entry.createdAt),
-                        "dd/MM/yyyy HH:mm",
-                        { locale: es }
-                      )}
+                      {formatDateAR(entry.createdAt, "dd/MM/yyyy HH:mm")}
                     </p>
                   </div>
                 </div>
@@ -208,32 +203,24 @@ export default async function OrderDetailPage({ params }: Props) {
             <div className="mt-4 space-y-2 text-xs text-gray-text">
               <p>
                 Creado:{" "}
-                {format(new Date(order.createdAt), "dd/MM/yyyy HH:mm", {
-                  locale: es,
-                })}
+                {formatDateAR(order.createdAt, "dd/MM/yyyy HH:mm")}
               </p>
               {order.expiresAt && (
                 <p>
                   Vence:{" "}
-                  {format(new Date(order.expiresAt), "dd/MM/yyyy HH:mm", {
-                    locale: es,
-                  })}
+                  {formatDateAR(order.expiresAt, "dd/MM/yyyy HH:mm")}
                 </p>
               )}
               {order.paidAt && (
                 <p>
                   Pagado:{" "}
-                  {format(new Date(order.paidAt), "dd/MM/yyyy HH:mm", {
-                    locale: es,
-                  })}
+                  {formatDateAR(order.paidAt, "dd/MM/yyyy HH:mm")}
                 </p>
               )}
               {order.shippedAt && (
                 <p>
                   Enviado:{" "}
-                  {format(new Date(order.shippedAt), "dd/MM/yyyy HH:mm", {
-                    locale: es,
-                  })}
+                  {formatDateAR(order.shippedAt, "dd/MM/yyyy HH:mm")}
                 </p>
               )}
             </div>

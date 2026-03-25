@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { getOrderByCode } from "@/lib/queries/orders";
 import { ORDER_STATUS_LABELS, type OrderStatusType } from "@/lib/constants";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatDateAR } from "@/lib/utils";
 import { TrackingSearch } from "@/components/store/tracking-search";
 
 export const metadata: Metadata = {
@@ -106,9 +105,7 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                     </p>
                   )}
                   <p className="text-xs text-gray-light mt-0.5">
-                    {format(new Date(entry.createdAt), "dd/MM/yyyy HH:mm", {
-                      locale: es,
-                    })}
+                    {formatDateAR(entry.createdAt, "dd/MM/yyyy HH:mm")}
                   </p>
                 </div>
               </div>

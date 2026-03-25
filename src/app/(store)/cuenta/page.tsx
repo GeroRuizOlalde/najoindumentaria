@@ -1,11 +1,9 @@
 import { getCustomerFromSession } from "@/lib/customer-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatPriceFromDecimal } from "@/lib/utils";
+import { formatPriceFromDecimal, formatDateAR } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/status-badge";
 import type { OrderStatusType } from "@/lib/constants";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import Link from "next/link";
 import { LogoutButton } from "@/components/store/logout-button";
 import { User, MapPin, ShoppingBag } from "lucide-react";
@@ -103,7 +101,7 @@ export default async function AccountPage() {
                     : order.sizeLabel || "—"}
                 </p>
                 <p className="text-xs text-gray-text mt-0.5">
-                  {format(new Date(order.createdAt), "dd/MM/yyyy", { locale: es })}
+                  {formatDateAR(order.createdAt, "dd/MM/yyyy")}
                 </p>
               </div>
               <div className="flex items-center gap-3">

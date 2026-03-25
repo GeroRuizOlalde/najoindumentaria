@@ -1,5 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+const ARGENTINA_TZ = "America/Argentina/Buenos_Aires";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -59,4 +63,12 @@ export function getInitials(name: string): string {
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
   return str.slice(0, length) + "...";
+}
+
+export function formatDateAR(date: Date | string, formatStr: string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const argentinaDate = new Date(
+    d.toLocaleString("en-US", { timeZone: ARGENTINA_TZ })
+  );
+  return format(argentinaDate, formatStr, { locale: es });
 }
