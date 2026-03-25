@@ -21,7 +21,8 @@
       "Bash(mkdir -p \"C:\\\\Users\\\\geror.GERO\\\\OneDrive\\\\Documentos\\\\GitHub\\\\najoindumentaria\\\\src\\\\app\\\\\\(store\\)\\\\shop\\\\categoria\\\\[slug]\")",
       "Bash(mkdir -p \"C:\\\\Users\\\\geror.GERO\\\\OneDrive\\\\Documentos\\\\GitHub\\\\najoindumentaria\\\\src\\\\app\\\\\\(store\\)\\\\shop\\\\marca\\\\[slug]\")",
       "mcp__claude_ai_Vercel__get_runtime_logs",
-      "mcp__claude_ai_Vercel__get_deployment_build_logs"
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "mcp__claude_ai_Vercel__web_fetch_vercel_url"
     ]
   }
 }
