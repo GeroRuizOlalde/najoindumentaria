@@ -228,8 +228,8 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
               multiple: true,
             }}
             onSuccess={(result) => {
-              if (typeof result.info === "object" && result.info.secure_url) {
-                setImages((prev) => [...prev, result.info.secure_url]);
+              if (typeof result.info === "object" && result.info && "secure_url" in result.info) {
+                setImages((prev) => [...prev, (result.info as { secure_url: string }).secure_url]);
               }
             }}
           >

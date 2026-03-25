@@ -20,11 +20,11 @@ export function AddressCard({ address }: AddressCardProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
-    startTransition(() => deleteAddress(address.id));
+    startTransition(() => { deleteAddress(address.id); });
   };
 
   const handleSetDefault = () => {
-    startTransition(() => setDefaultAddress(address.id));
+    startTransition(() => { setDefaultAddress(address.id); });
   };
 
   return (

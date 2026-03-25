@@ -56,7 +56,7 @@ export async function updateOrderStatus(
       });
 
       // Restore stock if cancelled or expired
-      if (newStatus === "CANCELLED" || newStatus === "EXPIRED") {
+      if ((newStatus === "CANCELLED" || newStatus === "EXPIRED") && order.productId && order.sizeLabel) {
         await tx.productSize.updateMany({
           where: {
             productId: order.productId,

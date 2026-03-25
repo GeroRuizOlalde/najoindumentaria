@@ -43,13 +43,15 @@ export async function GET(request: Request) {
       });
 
       // Restore stock
-      await tx.productSize.updateMany({
-        where: {
-          productId: order.productId,
-          sizeLabel: order.sizeLabel,
-        },
-        data: { stock: { increment: 1 }, isAvailable: true },
-      });
+      if (order.productId && order.sizeLabel) {
+        await tx.productSize.updateMany({
+          where: {
+            productId: order.productId,
+            sizeLabel: order.sizeLabel,
+          },
+          data: { stock: { increment: 1 }, isAvailable: true },
+        });
+      }
     });
 
     expiredCount++;

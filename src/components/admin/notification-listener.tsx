@@ -11,7 +11,8 @@ interface NotificationOrder {
   orderCode: string;
   amount: string;
   customer: { name: string };
-  product: { name: string };
+  product?: { name: string } | null;
+  items?: { product?: { name: string } | null }[];
 }
 
 export function NotificationListener() {

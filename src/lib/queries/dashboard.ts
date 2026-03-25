@@ -44,6 +44,7 @@ export async function getBestWorstSellingProducts() {
     by: ["productId"],
     where: {
       status: { in: ["CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED"] },
+      productId: { not: null },
     },
     _count: { productId: true },
     orderBy: { _count: { productId: "desc" } },
@@ -51,8 +52,8 @@ export async function getBestWorstSellingProducts() {
 
   if (orderCounts.length === 0) return { best: null, worst: null };
 
-  const bestId = orderCounts[0].productId;
-  const worstId = orderCounts[orderCounts.length - 1].productId;
+  const bestId = orderCounts[0].productId as string;
+  const worstId = orderCounts[orderCounts.length - 1].productId as string;
 
   const [best, worst] = await Promise.all([
     prisma.product.findUnique({
