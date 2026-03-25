@@ -35,7 +35,9 @@
       "Bash(grep -r archive-orders /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src --include=*.ts --include=*.tsx)",
       "Bash(grep -r \"timezone\\\\|toLocaleString\\\\|toLocaleDateString\\\\|locale\" /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src --include=*.ts --include=*.tsx)",
       "Bash(node:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx tsx -e \":*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }
