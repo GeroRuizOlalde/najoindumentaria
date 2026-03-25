@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
@@ -6,6 +7,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "destructive" | "outline";
   size?: "sm" | "md" | "lg" | "icon";
   loading?: boolean;
+  asChild?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -17,12 +19,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       loading = false,
       disabled,
       children,
+      asChild = false,
       ...props
     },
     ref
   ) => {
+    const Comp = asChild ? Slot : "button";
     return (
-      <button
+      <Comp
         ref={ref}
         disabled={disabled || loading}
         className={cn(
@@ -48,7 +52,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {children}
-      </button>
+      </Comp>
     );
   }
 );
