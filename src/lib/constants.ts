@@ -124,4 +124,7 @@ export const SITE_SETTINGS_KEYS = {
   WHATSAPP_NUMBER: "whatsapp_number",
   EMAIL_SENDER_NAME: "email_sender_name",
   EMAIL_SENDER_ADDRESS: "email_sender_address",
+  ARCHIVE_DAYS_AFTER_COMPLETION: "archive_days_after_completion",
 } as const;
+
+export const DEFAULT_ARCHIVE_DAYS = 7;

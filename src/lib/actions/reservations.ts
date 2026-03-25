@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { reservationSchema } from "@/lib/validations/reservation";
 import { generateOrderCode } from "@/lib/utils";
 import { RESERVATION_EXPIRY_HOURS } from "@/lib/constants";
+import { sendReservationEmail } from "@/lib/email/send-reservation-email";
 
 export type ReservationResult = {
   success?: boolean;
@@ -48,7 +49,7 @@ export async function createReservation(
     // Find product and size
     const size = await prisma.productSize.findUnique({
       where: { id: data.sizeId },
-      include: { product: { select: { id: true, name: true, price: true } } },
+      include: { product: { select: { id: true, name: true, price: true, brand: { select: { name: true } } } } },
     });
 
     if (!size) return { error: "Talle no encontrado." };
@@ -131,7 +132,21 @@ export async function createReservation(
       return newOrder;
     });
 
-    // TODO: Send confirmation email (Phase 16)
+    // Send confirmation email (non-blocking)
+    try {
+      await sendReservationEmail({
+        customerName: data.name,
+        customerEmail: data.email,
+        orderCode: order.orderCode,
+        productName: size.product.name,
+        brandName: size.product.brand.name,
+        sizeLabel: size.sizeLabel,
+        price: Number(size.product.price),
+        expiresAt,
+      });
+    } catch (emailError) {
+      console.error("Error al enviar email de reserva:", emailError);
+    }
 
     return { success: true, orderCode: order.orderCode, orderId: order.id };
   } catch (err) {

@@ -31,6 +31,10 @@ const EMAIL_FIELDS = [
   { key: "email_sender_address", label: "Email del remitente" },
 ];
 
+const ARCHIVE_FIELDS = [
+  { key: "archive_days_after_completion", label: "Días para auto-archivar", placeholder: "7" },
+];
+
 export default async function SettingsPage() {
   const { map } = await getSettings();
 
@@ -39,6 +43,7 @@ export default async function SettingsPage() {
     { title: "Empresa", description: "Información general de la empresa.", group: "company", fields: COMPANY_FIELDS },
     { title: "Redes sociales", description: "Links a redes sociales y WhatsApp.", group: "social", fields: SOCIAL_FIELDS },
     { title: "Email", description: "Configuración del remitente de emails.", group: "email", fields: EMAIL_FIELDS },
+    { title: "Archivado automático", description: "Los pedidos entregados, cancelados y expirados se archivan automáticamente después de estos días.", group: "archive", fields: ARCHIVE_FIELDS },
   ];
 
   return (

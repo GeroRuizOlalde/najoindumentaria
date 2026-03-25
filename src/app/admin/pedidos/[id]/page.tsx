@@ -43,21 +43,57 @@ export default async function OrderDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Product */}
+          {/* Products */}
           <Card>
-            <CardTitle>Producto</CardTitle>
-            <div className="mt-4 flex items-center gap-4">
-              <div>
-                <p className="font-medium">{order.product.name}</p>
-                <p className="text-sm text-gray-text">
-                  {order.product.brand.name} &middot; Talle {order.sizeLabel}
-                </p>
-                <FormattedPrice
-                  price={Number(order.amount)}
-                  size="lg"
-                  className="mt-2"
-                />
-              </div>
+            <CardTitle>
+              {order.items.length > 0 ? "Productos" : "Producto"}
+            </CardTitle>
+            <div className="mt-4 space-y-4">
+              {order.items.length > 0 ? (
+                <>
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <p className="font-medium">{item.product.name}</p>
+                        <p className="text-sm text-gray-text">
+                          {item.product.brand.name} &middot; Talle {item.sizeLabel}
+                          {item.quantity > 1 && ` x${item.quantity}`}
+                        </p>
+                      </div>
+                      <p className="text-sm font-medium">
+                        {new Intl.NumberFormat("es-AR", {
+                          style: "currency",
+                          currency: "ARS",
+                          minimumFractionDigits: 0,
+                        }).format(Number(item.unitPrice) * item.quantity)}
+                      </p>
+                    </div>
+                  ))}
+                  <div className="border-t border-border pt-3 flex justify-between">
+                    <span className="font-medium">Total</span>
+                    <FormattedPrice
+                      price={Number(order.amount)}
+                      size="lg"
+                    />
+                  </div>
+                </>
+              ) : order.product ? (
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="font-medium">{order.product.name}</p>
+                    <p className="text-sm text-gray-text">
+                      {order.product.brand.name} &middot; Talle {order.sizeLabel}
+                    </p>
+                    <FormattedPrice
+                      price={Number(order.amount)}
+                      size="lg"
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-text">Producto no disponible</p>
+              )}
             </div>
           </Card>
 
@@ -208,6 +244,9 @@ export default async function OrderDetailPage({ params }: Props) {
             <OrderStatusChanger
               orderId={order.id}
               currentStatus={order.status as OrderStatusType}
+              customerPhone={order.customer.phone}
+              customerName={order.customer.name}
+              orderCode={order.orderCode}
             />
           </Card>
         </div>

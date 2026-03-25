@@ -139,6 +139,25 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   }
 }
 
+export async function deleteAllProducts(): Promise<ActionResult> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.orderStatusHistory.deleteMany();
+      await tx.order.deleteMany();
+      await tx.productSize.deleteMany();
+      await tx.product.deleteMany();
+    });
+
+    revalidatePath("/admin/productos");
+    revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/shop");
+    return { success: true };
+  } catch {
+    return { error: "Error al eliminar los productos." };
+  }
+}
+
 export async function toggleFeatured(id: string): Promise<ActionResult> {
   try {
     const product = await prisma.product.findUnique({ where: { id } });

@@ -15,6 +15,8 @@ import { Package, Star } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import type { ProductStatus } from "@/generated/prisma/client";
+import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
+import { deleteAllProducts } from "@/lib/actions/products";
 
 interface Props {
   searchParams: Promise<{
@@ -38,12 +40,19 @@ export default async function ProductsPage({ searchParams }: Props) {
         title="Productos"
         description={`${total} productos en el catálogo`}
         action={
-          <Link
-            href="/admin/productos/nuevo"
-            className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
-          >
-            Nuevo producto
-          </Link>
+          <div className="flex items-center gap-3">
+            <BulkDeleteButton
+              action={deleteAllProducts}
+              confirmTitle="Eliminar todos los productos"
+              confirmDescription="Se eliminarán permanentemente TODOS los productos, sus talles y los pedidos asociados. Esta acción no se puede deshacer."
+            />
+            <Link
+              href="/admin/productos/nuevo"
+              className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
+            >
+              Nuevo producto
+            </Link>
+          </div>
         }
       />
 

@@ -120,10 +120,11 @@ model Product {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  brand    Brand         @relation(fields: [brandId], references: [id])
-  category Category      @relation(fields: [categoryId], references: [id])
-  sizes    ProductSize[]
-  orders   Order[]
+  brand      Brand         @relation(fields: [brandId], references: [id])
+  category   Category      @relation(fields: [categoryId], references: [id])
+  sizes      ProductSize[]
+  orders     Order[]
+  orderItems OrderItem[]
 
   @@index([brandId])
   @@index([categoryId])
@@ -163,12 +164,32 @@ model Customer {
   address          String?          @db.Text
   preferredContact PreferredContact @default(WHATSAPP)
   notes            String?          @db.Text
+  password         String?
+  emailVerified    DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  orders Order[]
+  orders    Order[]
+  addresses CustomerAddress[]
 
   @@map("customers")
+}
+
+model CustomerAddress {
+  id         String  @id @default(cuid())
+  customerId String
+  label      String  @default("Principal")
+  address    String  @db.Text
+  city       String
+  province   String
+  zipCode    String?
+  isDefault  Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("customer_addresses")
 }
 
 enum PreferredContact {
@@ -180,8 +201,8 @@ model Order {
   id              String         @id @default(cuid())
   orderCode       String         @unique
   customerId      String
-  productId       String
-  sizeLabel       String
+  productId       String?
+  sizeLabel       String?
   amount          Decimal        @db.Decimal(10, 2)
   status          OrderStatus    @default(PENDING)
   deliveryMethod  DeliveryMethod
@@ -196,18 +217,34 @@ model Order {
   shippedAt       DateTime?
   deliveredAt     DateTime?
   cancelledAt     DateTime?
+  archivedAt      DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
   customer      Customer             @relation(fields: [customerId], references: [id])
-  product       Product              @relation(fields: [productId], references: [id])
+  product       Product?             @relation(fields: [productId], references: [id])
   statusHistory OrderStatusHistory[]
+  items         OrderItem[]
 
   @@index([status])
   @@index([orderCode])
   @@index([customerId])
   @@index([expiresAt])
   @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  sizeLabel String
+  quantity  Int     @default(1)
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
 }
 
 enum OrderStatus {

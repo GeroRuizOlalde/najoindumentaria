@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/shared/logo";
 import { MobileMenu } from "@/components/store/mobile-menu";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CartIcon } from "@/components/store/cart-icon";
 
 interface NavCategory {
   name: string;
@@ -21,6 +22,7 @@ interface NavBrand {
 interface NavbarProps {
   categories: NavCategory[];
   brands: NavBrand[];
+  isLoggedIn?: boolean;
 }
 
 const NAV_LINKS = [
@@ -30,7 +32,7 @@ const NAV_LINKS = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-export function Navbar({ categories, brands }: NavbarProps) {
+export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const pathname = usePathname();
@@ -145,13 +147,23 @@ export function Navbar({ categories, brands }: NavbarProps) {
           </nav>
 
           {/* Right actions */}
-          <Link
-            href="/seguimiento"
-            className="p-2 text-gray-text hover:text-black transition-colors"
-            aria-label="Seguimiento de pedido"
-          >
-            <Search className="h-5 w-5" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href={isLoggedIn ? "/cuenta" : "/login-cliente"}
+              className="p-2 text-gray-text hover:text-black transition-colors"
+              aria-label={isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}
+            >
+              <User className="h-5 w-5" />
+            </Link>
+            <CartIcon />
+            <Link
+              href="/seguimiento"
+              className="p-2 text-gray-text hover:text-black transition-colors"
+              aria-label="Seguimiento de pedido"
+            >
+              <Search className="h-5 w-5" />
+            </Link>
+          </div>
         </div>
       </header>
 

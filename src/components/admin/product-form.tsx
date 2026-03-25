@@ -12,7 +12,8 @@ import {
   type ActionResult,
 } from "@/lib/actions/products";
 import { COMMON_SHOE_SIZES, COMMON_CLOTHING_SIZES } from "@/lib/constants";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Upload } from "lucide-react";
+import { CldUploadWidget } from "next-cloudinary";
 
 interface Brand {
   id: string;
@@ -217,23 +218,50 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
       {/* Images */}
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold">Imágenes</h2>
-        <div className="flex gap-2">
-          <Input
-            id="newImage"
-            label="URL de imagen"
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            placeholder="https://res.cloudinary.com/..."
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={addImage}
-            className="self-end"
+        <div className="flex gap-2 flex-wrap">
+          <CldUploadWidget
+            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+            options={{
+              maxFiles: 5,
+              sources: ["local", "url", "camera"],
+              folder: "najoindumentaria/products",
+              multiple: true,
+            }}
+            onSuccess={(result) => {
+              if (typeof result.info === "object" && result.info.secure_url) {
+                setImages((prev) => [...prev, result.info.secure_url]);
+              }
+            }}
           >
-            Agregar
-          </Button>
+            {({ open }) => (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => open()}
+              >
+                <Upload className="h-3.5 w-3.5 mr-1.5" />
+                Subir imagen
+              </Button>
+            )}
+          </CldUploadWidget>
+          <div className="flex gap-2 flex-1 min-w-0">
+            <Input
+              id="newImage"
+              label=""
+              value={newImageUrl}
+              onChange={(e) => setNewImageUrl(e.target.value)}
+              placeholder="O pegá una URL..."
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addImage}
+              className="self-end"
+            >
+              Agregar URL
+            </Button>
+          </div>
         </div>
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2">

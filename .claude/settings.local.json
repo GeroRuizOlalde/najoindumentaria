@@ -22,7 +22,13 @@
       "Bash(mkdir -p \"C:\\\\Users\\\\geror.GERO\\\\OneDrive\\\\Documentos\\\\GitHub\\\\najoindumentaria\\\\src\\\\app\\\\\\(store\\)\\\\shop\\\\marca\\\\[slug]\")",
       "mcp__claude_ai_Vercel__get_runtime_logs",
       "mcp__claude_ai_Vercel__get_deployment_build_logs",
-      "mcp__claude_ai_Vercel__web_fetch_vercel_url"
+      "mcp__claude_ai_Vercel__web_fetch_vercel_url",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"BrandForm\\\\|CategoryForm\\\\|Dialog\" /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src/app/admin --include=*.tsx)",
+      "Bash(grep -r \"TODO\\\\|FIXME\" /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src --include=*.ts --include=*.tsx)",
+      "Bash(find /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src/app/api -type f -name *.ts)",
+      "Bash(node -e \":*)",
+      "Bash(ls:*)"
     ]
   }
 }

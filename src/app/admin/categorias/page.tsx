@@ -12,6 +12,8 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { FolderOpen } from "lucide-react";
 import Link from "next/link";
+import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
+import { deleteAllCategories } from "@/lib/actions/categories";
 
 export default async function CategoriesPage() {
   const categories = await getCategories();
@@ -22,12 +24,19 @@ export default async function CategoriesPage() {
         title="Categorías"
         description="Gestioná las categorías de tu catálogo"
         action={
-          <Link
-            href="/admin/categorias?new=true"
-            className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
-          >
-            Nueva categoría
-          </Link>
+          <div className="flex items-center gap-3">
+            <BulkDeleteButton
+              action={deleteAllCategories}
+              confirmTitle="Eliminar todas las categorías"
+              confirmDescription="Se eliminarán permanentemente TODAS las categorías, sus productos asociados y los pedidos relacionados. Esta acción no se puede deshacer."
+            />
+            <Link
+              href="/admin/categorias?new=true"
+              className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
+            >
+              Nueva categoría
+            </Link>
+          </div>
         }
       />
 

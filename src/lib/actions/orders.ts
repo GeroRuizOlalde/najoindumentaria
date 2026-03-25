@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { VALID_STATUS_TRANSITIONS, type OrderStatusType } from "@/lib/constants";
 import type { OrderStatus } from "@/generated/prisma/client";
+import { sendStatusUpdateEmail } from "@/lib/email/send-status-update-email";
 
 export type ActionResult = {
   success?: boolean;
@@ -17,7 +18,10 @@ export async function updateOrderStatus(
   changedBy?: string
 ): Promise<ActionResult> {
   try {
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { customer: { select: { name: true, email: true } } },
+    });
     if (!order) return { error: "Pedido no encontrado." };
 
     const validTransitions = VALID_STATUS_TRANSITIONS[order.status as OrderStatusType];
@@ -63,11 +67,51 @@ export async function updateOrderStatus(
       }
     });
 
+    // Send status update email (non-blocking)
+    try {
+      await sendStatusUpdateEmail({
+        customerName: order.customer.name,
+        customerEmail: order.customer.email,
+        orderCode: order.orderCode,
+        newStatus: newStatus as OrderStatusType,
+        note,
+        trackingNumber: order.trackingNumber ?? undefined,
+      });
+    } catch (emailError) {
+      console.error("Error al enviar email de actualización:", emailError);
+    }
+
     revalidatePath("/admin/pedidos");
     revalidatePath(`/admin/pedidos/${orderId}`);
     return { success: true };
   } catch {
     return { error: "Error al actualizar el estado del pedido." };
+  }
+}
+
+export async function archiveOrder(orderId: string): Promise<ActionResult> {
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { archivedAt: new Date() },
+    });
+    revalidatePath("/admin/pedidos");
+    return { success: true };
+  } catch {
+    return { error: "Error al archivar el pedido." };
+  }
+}
+
+export async function unarchiveOrder(orderId: string): Promise<ActionResult> {
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { archivedAt: null },
+    });
+    revalidatePath("/admin/pedidos");
+    return { success: true };
+  } catch {
+    return { error: "Error al desarchivar el pedido." };
   }
 }
 

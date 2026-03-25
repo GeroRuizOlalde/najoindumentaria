@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/admin/sidebar";
+import { NotificationListener } from "@/components/admin/notification-listener";
 
 export default async function AdminLayout({
   children,
@@ -24,6 +25,7 @@ export default async function AdminLayout({
           {children}
         </div>
       </main>
+      <NotificationListener />
     </div>
   );
 }

@@ -8,16 +8,24 @@ import {
   type OrderStatusType,
 } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import type { OrderStatus } from "@/generated/prisma/client";
+import { MessageCircle } from "lucide-react";
 
 interface OrderStatusChangerProps {
   orderId: string;
   currentStatus: OrderStatusType;
+  customerPhone?: string;
+  customerName?: string;
+  orderCode?: string;
 }
 
 export function OrderStatusChanger({
   orderId,
   currentStatus,
+  customerPhone,
+  customerName,
+  orderCode,
 }: OrderStatusChangerProps) {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +33,21 @@ export function OrderStatusChanger({
 
   const validTransitions = VALID_STATUS_TRANSITIONS[currentStatus];
 
-  if (validTransitions.length === 0) return null;
+  const showWhatsApp =
+    customerPhone &&
+    ["CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED"].includes(currentStatus);
+
+  const whatsappMessage = customerName && orderCode
+    ? encodeURIComponent(
+        `Hola ${customerName}! Te informamos sobre tu pedido ${orderCode}.`
+      )
+    : "";
+
+  const whatsappUrl = customerPhone
+    ? `https://wa.me/${customerPhone.replace(/\D/g, "")}?text=${whatsappMessage}`
+    : "";
+
+  if (validTransitions.length === 0 && !showWhatsApp) return null;
 
   const handleChange = (newStatus: OrderStatusType) => {
     setError("");
@@ -73,6 +95,21 @@ export function OrderStatusChanger({
           </Button>
         ))}
       </div>
+
+      {showWhatsApp && (
+        <>
+          <Separator />
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 text-xs font-medium hover:opacity-90 transition-opacity w-full justify-center"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Enviar WhatsApp al cliente
+          </a>
+        </>
+      )}
     </div>
   );
 }

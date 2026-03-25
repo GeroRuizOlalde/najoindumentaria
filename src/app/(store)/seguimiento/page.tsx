@@ -56,12 +56,31 @@ export default async function SeguimientoPage({ searchParams }: Props) {
           </div>
 
           <div className="bg-off-white p-4 mb-6">
-            <p className="font-medium text-sm">
-              {order.product.brand.name} {order.product.name}
-            </p>
-            <p className="text-xs text-gray-text mt-0.5">
-              Talle {order.sizeLabel}
-            </p>
+            {order.items.length > 0 ? (
+              <div className="space-y-1">
+                {order.items.map((item, i) => (
+                  <div key={i}>
+                    <p className="font-medium text-sm">
+                      {item.product.brand.name} {item.product.name}
+                    </p>
+                    <p className="text-xs text-gray-text">
+                      Talle {item.sizeLabel}{item.quantity > 1 && ` x${item.quantity}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : order.product ? (
+              <>
+                <p className="font-medium text-sm">
+                  {order.product.brand.name} {order.product.name}
+                </p>
+                <p className="text-xs text-gray-text mt-0.5">
+                  Talle {order.sizeLabel}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-text">Producto no disponible</p>
+            )}
           </div>
 
           {/* Timeline */}

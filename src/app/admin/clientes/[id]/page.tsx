@@ -85,8 +85,8 @@ export default async function CustomerDetailPage({ params }: Props) {
                         {order.orderCode}
                       </Link>
                       <p className="text-xs text-gray-text">
-                        {order.product.brand.name} {order.product.name} &middot;
-                        Talle {order.sizeLabel}
+                        {order.product?.brand?.name} {order.product?.name || "Varios productos"} &middot;
+                        Talle {order.sizeLabel || "—"}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 text-right">

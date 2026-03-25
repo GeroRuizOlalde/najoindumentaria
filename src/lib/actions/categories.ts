@@ -65,6 +65,27 @@ export async function updateCategory(
   }
 }
 
+export async function deleteAllCategories(): Promise<ActionResult> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.orderStatusHistory.deleteMany();
+      await tx.order.deleteMany();
+      await tx.productSize.deleteMany();
+      await tx.product.deleteMany();
+      await tx.category.deleteMany();
+    });
+
+    revalidatePath("/admin/categorias");
+    revalidatePath("/admin/productos");
+    revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/shop");
+    return { success: true };
+  } catch {
+    return { error: "Error al eliminar las categorías." };
+  }
+}
+
 export async function deleteCategory(id: string): Promise<ActionResult> {
   try {
     const category = await prisma.category.findUnique({

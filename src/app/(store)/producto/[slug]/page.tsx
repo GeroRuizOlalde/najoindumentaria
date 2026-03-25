@@ -105,6 +105,9 @@ export default async function ProductPage({ params }: Props) {
             <ProductActions
               productId={product.id}
               productSlug={product.slug}
+              productName={product.name}
+              productImage={product.images[0] || ""}
+              brandName={product.brand.name}
               price={Number(product.price)}
               compareAtPrice={
                 product.compareAtPrice

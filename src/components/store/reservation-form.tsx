@@ -9,6 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/constants";
 
+interface CustomerData {
+  name: string;
+  email: string;
+  phone: string;
+  province: string;
+  city: string;
+  defaultAddress?: string;
+}
+
 interface ReservationFormProps {
   productId: string;
   sizeId: string;
@@ -16,6 +25,7 @@ interface ReservationFormProps {
   brandName: string;
   sizeLabel: string;
   price: string;
+  customer?: CustomerData | null;
 }
 
 const initialState: ReservationResult = {};
@@ -27,6 +37,7 @@ export function ReservationForm({
   brandName,
   sizeLabel,
   price,
+  customer,
 }: ReservationFormProps) {
   const [state, action, pending] = useActionState(
     createReservation,
@@ -66,6 +77,7 @@ export function ReservationForm({
           <Input
             name="name"
             label="Nombre completo"
+            defaultValue={customer?.name}
             required
             error={state.errors?.name}
           />
@@ -73,12 +85,14 @@ export function ReservationForm({
             name="email"
             label="Email"
             type="email"
+            defaultValue={customer?.email}
             required
             error={state.errors?.email}
           />
           <Input
             name="phone"
             label="Teléfono / WhatsApp"
+            defaultValue={customer?.phone}
             required
             error={state.errors?.phone}
           />
@@ -101,12 +115,14 @@ export function ReservationForm({
             name="province"
             label="Provincia"
             placeholder="Seleccioná una provincia"
+            defaultValue={customer?.province}
             options={PROVINCES.map((p) => ({ value: p, label: p }))}
             error={state.errors?.province}
           />
           <Input
             name="city"
             label="Ciudad"
+            defaultValue={customer?.city}
             required
             error={state.errors?.city}
           />
@@ -150,7 +166,11 @@ export function ReservationForm({
       </div>
 
       {/* Shipping address */}
-      <Input name="address" label="Dirección de envío (opcional)" />
+      <Input
+        name="address"
+        label="Dirección de envío (opcional)"
+        defaultValue={customer?.defaultAddress}
+      />
 
       {/* Notes */}
       <Textarea

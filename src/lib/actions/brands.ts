@@ -88,6 +88,27 @@ export async function deleteBrand(id: string): Promise<ActionResult> {
   }
 }
 
+export async function deleteAllBrands(): Promise<ActionResult> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.orderStatusHistory.deleteMany();
+      await tx.order.deleteMany();
+      await tx.productSize.deleteMany();
+      await tx.product.deleteMany();
+      await tx.brand.deleteMany();
+    });
+
+    revalidatePath("/admin/marcas");
+    revalidatePath("/admin/productos");
+    revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/shop");
+    return { success: true };
+  } catch {
+    return { error: "Error al eliminar las marcas." };
+  }
+}
+
 export async function toggleBrandActive(id: string): Promise<ActionResult> {
   try {
     const brand = await prisma.brand.findUnique({ where: { id } });

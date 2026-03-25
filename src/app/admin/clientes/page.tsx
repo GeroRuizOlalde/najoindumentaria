@@ -13,6 +13,8 @@ import { Users } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
+import { deleteAllCustomers } from "@/lib/actions/customers";
 
 interface Props {
   searchParams: Promise<{ page?: string; search?: string }>;
@@ -30,6 +32,13 @@ export default async function CustomersPage({ searchParams }: Props) {
       <PageHeader
         title="Clientes"
         description={`${total} clientes registrados`}
+        action={
+          <BulkDeleteButton
+            action={deleteAllCustomers}
+            confirmTitle="Eliminar todos los clientes"
+            confirmDescription="Se eliminarán permanentemente TODOS los clientes y sus pedidos asociados. Esta acción no se puede deshacer."
+          />
+        }
       />
 
       {customers.length === 0 ? (

@@ -12,6 +12,8 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { Tags } from "lucide-react";
 import Link from "next/link";
+import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
+import { deleteAllBrands } from "@/lib/actions/brands";
 
 export default async function BrandsPage() {
   const brands = await getBrands();
@@ -22,12 +24,19 @@ export default async function BrandsPage() {
         title="Marcas"
         description="Gestioná las marcas de tu catálogo"
         action={
-          <Link
-            href="/admin/marcas?new=true"
-            className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
-          >
-            Nueva marca
-          </Link>
+          <div className="flex items-center gap-3">
+            <BulkDeleteButton
+              action={deleteAllBrands}
+              confirmTitle="Eliminar todas las marcas"
+              confirmDescription="Se eliminarán permanentemente TODAS las marcas, sus productos asociados y los pedidos relacionados. Esta acción no se puede deshacer."
+            />
+            <Link
+              href="/admin/marcas?new=true"
+              className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
+            >
+              Nueva marca
+            </Link>
+          </div>
         }
       />
 

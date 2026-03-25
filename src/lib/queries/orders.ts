@@ -6,13 +6,17 @@ interface OrderFilters {
   search?: string;
   page?: number;
   limit?: number;
+  archived?: boolean;
 }
 
 export async function getOrders(filters: OrderFilters = {}) {
-  const { status, search, page = 1, limit = 20 } = filters;
+  const { status, search, page = 1, limit = 20, archived = false } = filters;
 
   const where = {
     ...(status && { status }),
+    ...(archived
+      ? { archivedAt: { not: null } }
+      : { archivedAt: null }),
     ...(search && {
       OR: [
         { orderCode: { contains: search, mode: "insensitive" as const } },
@@ -40,6 +44,17 @@ export async function getOrders(filters: OrderFilters = {}) {
             brand: { select: { name: true } },
           },
         },
+        items: {
+          include: {
+            product: {
+              select: {
+                name: true,
+                images: true,
+                brand: { select: { name: true } },
+              },
+            },
+          },
+        },
       },
     }),
     prisma.order.count({ where }),
@@ -59,6 +74,18 @@ export async function getOrderById(id: string) {
           category: { select: { name: true } },
         },
       },
+      items: {
+        include: {
+          product: {
+            select: {
+              name: true,
+              images: true,
+              slug: true,
+              brand: { select: { name: true } },
+            },
+          },
+        },
+      },
       statusHistory: { orderBy: { createdAt: "asc" } },
     },
   });
@@ -73,6 +100,17 @@ export async function getOrderByCode(code: string) {
           name: true,
           images: true,
           brand: { select: { name: true } },
+        },
+      },
+      items: {
+        include: {
+          product: {
+            select: {
+              name: true,
+              images: true,
+              brand: { select: { name: true } },
+            },
+          },
         },
       },
       statusHistory: {

@@ -39,6 +39,48 @@ export async function getDashboardStats() {
   };
 }
 
+export async function getBestWorstSellingProducts() {
+  const orderCounts = await prisma.order.groupBy({
+    by: ["productId"],
+    where: {
+      status: { in: ["CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED"] },
+    },
+    _count: { productId: true },
+    orderBy: { _count: { productId: "desc" } },
+  });
+
+  if (orderCounts.length === 0) return { best: null, worst: null };
+
+  const bestId = orderCounts[0].productId;
+  const worstId = orderCounts[orderCounts.length - 1].productId;
+
+  const [best, worst] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id: bestId },
+      select: { name: true, images: true, brand: { select: { name: true } } },
+    }),
+    bestId === worstId
+      ? null
+      : prisma.product.findUnique({
+          where: { id: worstId },
+          select: { name: true, images: true, brand: { select: { name: true } } },
+        }),
+  ]);
+
+  return {
+    best: best
+      ? { ...best, salesCount: orderCounts[0]._count.productId }
+      : null,
+    worst:
+      worst && bestId !== worstId
+        ? {
+            ...worst,
+            salesCount: orderCounts[orderCounts.length - 1]._count.productId,
+          }
+        : null,
+  };
+}
+
 export async function getRecentOrders(limit = 5) {
   return prisma.order.findMany({
     take: limit,

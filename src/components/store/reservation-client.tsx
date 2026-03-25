@@ -10,6 +10,15 @@ import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/constants";
 import { ReservationSuccess } from "@/components/store/reservation-success";
 
+interface CustomerData {
+  name: string;
+  email: string;
+  phone: string;
+  province: string;
+  city: string;
+  defaultAddress?: string;
+}
+
 interface ReservationClientProps {
   productId: string;
   productName: string;
@@ -27,6 +36,7 @@ interface ReservationClientProps {
     instructions?: string;
   };
   whatsappNumber?: string;
+  customer?: CustomerData | null;
 }
 
 const initialState: ReservationResult = {};
@@ -41,6 +51,7 @@ export function ReservationClient({
   price,
   bankDetails,
   whatsappNumber,
+  customer,
 }: ReservationClientProps) {
   const [state, action, pending] = useActionState(
     createReservation,
@@ -91,6 +102,7 @@ export function ReservationClient({
             <Input
               name="name"
               label="Nombre completo"
+              defaultValue={customer?.name}
               required
               error={state.errors?.name}
             />
@@ -98,12 +110,14 @@ export function ReservationClient({
               name="email"
               label="Email"
               type="email"
+              defaultValue={customer?.email}
               required
               error={state.errors?.email}
             />
             <Input
               name="phone"
               label="Teléfono / WhatsApp"
+              defaultValue={customer?.phone}
               required
               error={state.errors?.phone}
             />
@@ -126,12 +140,14 @@ export function ReservationClient({
               name="province"
               label="Provincia"
               placeholder="Seleccioná una provincia"
+              defaultValue={customer?.province}
               options={PROVINCES.map((p) => ({ value: p, label: p }))}
               error={state.errors?.province}
             />
             <Input
               name="city"
               label="Ciudad"
+              defaultValue={customer?.city}
               required
               error={state.errors?.city}
             />
@@ -175,7 +191,11 @@ export function ReservationClient({
         </div>
 
         {/* Shipping address */}
-        <Input name="address" label="Dirección de envío (opcional)" />
+        <Input
+          name="address"
+          label="Dirección de envío (opcional)"
+          defaultValue={customer?.defaultAddress}
+        />
 
         {/* Notes */}
         <Textarea
