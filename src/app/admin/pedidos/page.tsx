@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { getOrders } from "@/lib/queries/orders";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -13,9 +15,10 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { ShoppingBag, Archive } from "lucide-react";
-import Link from "next/link";
 import { ArchiveOrderButton } from "@/components/admin/archive-order-button";
+import { requireAdminPermission } from "@/lib/admin-permissions";
+import { ListToolbar } from "@/components/admin/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 
 interface Props {
   searchParams: Promise<{
@@ -27,9 +30,11 @@ interface Props {
 }
 
 export default async function OrdersPage({ searchParams }: Props) {
+  await requireAdminPermission("orders.view");
   const params = await searchParams;
   const isArchived = params.archived === "true";
-  const { orders, total } = await getOrders({
+
+  const { orders, total, totalPages, currentPage } = await getOrders({
     page: parseInt(params.page || "1"),
     status: params.status as OrderStatus | undefined,
     search: params.search,
@@ -47,15 +52,21 @@ export default async function OrdersPage({ searchParams }: Props) {
     { value: "ARCHIVED", label: "Archivados" },
   ];
 
+  const buildUrl = (page: number) => {
+    const qs = new URLSearchParams();
+    if (params.status) qs.set("status", params.status);
+    if (params.search) qs.set("search", params.search);
+    if (params.archived) qs.set("archived", params.archived);
+    if (page > 1) qs.set("page", String(page));
+    const query = qs.toString();
+    return query ? `/admin/pedidos?${query}` : "/admin/pedidos";
+  };
+
   return (
     <>
-      <PageHeader
-        title="Pedidos"
-        description={`${total} pedidos en total`}
-      />
+      <PageHeader title="Pedidos" description={`${total} pedidos en total`} />
 
-      {/* Status filter tabs */}
-      <div className="flex gap-1 mb-6 overflow-x-auto">
+      <div className="mb-6 flex gap-1 overflow-x-auto">
         {statusTabs.map((tab) => {
           const isArchivedTab = tab.value === "ARCHIVED";
           const href = isArchivedTab
@@ -83,93 +94,118 @@ export default async function OrdersPage({ searchParams }: Props) {
         })}
       </div>
 
+      <ListToolbar
+        search={params.search}
+        placeholder="Buscar por codigo o cliente"
+        resetHref={
+          isArchived
+            ? "/admin/pedidos?archived=true"
+            : params.status
+              ? `/admin/pedidos?status=${params.status}`
+              : "/admin/pedidos"
+        }
+        hiddenFields={{
+          status: params.status,
+          archived: params.archived,
+        }}
+      />
+
       {orders.length === 0 ? (
         <EmptyState
           icon={<ShoppingBag className="h-12 w-12" />}
           title="Sin pedidos"
-          description="Los pedidos aparecerán acá cuando los clientes hagan reservas."
+          description="Los pedidos apareceran aca cuando los clientes hagan reservas."
         />
       ) : (
-        <div className="border border-border bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Producto</TableHead>
-                <TableHead>Talle</TableHead>
-                <TableHead>Monto</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    <Link
-                      href={`/admin/pedidos/${order.id}`}
-                      className="font-medium text-black hover:underline"
-                    >
-                      {order.orderCode}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-sm">{order.customer.name}</p>
-                      <p className="text-xs text-gray-text">
-                        {order.customer.email}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {order.items.length > 0 ? (
-                      <div>
-                        <p className="text-sm">{order.items[0].product.name}</p>
-                        <p className="text-xs text-gray-text">
-                          {order.items[0].product.brand.name}
-                          {order.items.length > 1 && ` +${order.items.length - 1} más`}
-                        </p>
-                      </div>
-                    ) : order.product ? (
-                      <div>
-                        <p className="text-sm">{order.product.name}</p>
-                        <p className="text-xs text-gray-text">
-                          {order.product.brand.name}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-gray-text">—</p>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {order.items.length > 0
-                      ? order.items.map((i) => i.sizeLabel).join(", ")
-                      : order.sizeLabel || "—"}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {formatPriceFromDecimal(Number(order.amount))}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge
-                      status={order.status as OrderStatusType}
-                    />
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-text">
-                    {formatDateAR(order.createdAt, "dd/MM/yy HH:mm")}
-                  </TableCell>
-                  <TableCell>
-                    <ArchiveOrderButton
-                      orderId={order.id}
-                      isArchived={!!order.archivedAt}
-                    />
-                  </TableCell>
+        <>
+          <div className="border border-border bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Codigo</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead>Talle</TableHead>
+                  <TableHead>Monto</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell>
+                      <Link
+                        href={`/admin/pedidos/${order.id}`}
+                        className="font-medium text-black hover:underline"
+                      >
+                        {order.orderCode}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm">{order.customer.name}</p>
+                        <p className="text-xs text-gray-text">
+                          {order.customer.email}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {order.items.length > 0 ? (
+                        <div>
+                          <p className="text-sm">{order.items[0].product.name}</p>
+                          <p className="text-xs text-gray-text">
+                            {order.items[0].product.brand.name}
+                            {order.items.length > 1 &&
+                              ` +${order.items.length - 1} mas`}
+                          </p>
+                        </div>
+                      ) : order.product ? (
+                        <div>
+                          <p className="text-sm">{order.product.name}</p>
+                          <p className="text-xs text-gray-text">
+                            {order.product.brand.name}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-text">-</p>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.items.length > 0
+                        ? order.items.map((item) => item.sizeLabel).join(", ")
+                        : order.sizeLabel || "-"}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatPriceFromDecimal(Number(order.amount))}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={order.status as OrderStatusType} />
+                    </TableCell>
+                    <TableCell className="text-xs text-gray-text">
+                      {formatDateAR(order.createdAt, "dd/MM/yy HH:mm")}
+                    </TableCell>
+                    <TableCell>
+                      <ArchiveOrderButton
+                        orderId={order.id}
+                        isArchived={!!order.archivedAt}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              buildUrl={buildUrl}
+            />
+          </div>
+        </>
       )}
     </>
   );

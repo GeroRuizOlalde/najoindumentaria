@@ -3,6 +3,7 @@ import { z } from "zod";
 export const productSizeSchema = z.object({
   sizeLabel: z.string().min(1, "Talle requerido"),
   isAvailable: z.boolean(),
+  stock: z.coerce.number().int().min(0, "El stock no puede ser negativo"),
 });
 
 export const productSchema = z.object({

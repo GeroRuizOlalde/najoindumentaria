@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/shared/logo";
 import {
+  hasAdminPermission,
+  type AdminPermission,
+} from "@/lib/admin-permission-rules";
+import {
   LayoutDashboard,
   Package,
   Tags,
@@ -12,6 +16,9 @@ import {
   ShoppingBag,
   Users,
   Settings,
+  TicketPercent,
+  MessageSquareQuote,
+  FileText,
   LogOut,
   Menu,
   X,
@@ -19,13 +26,66 @@ import {
 import { useState } from "react";
 
 const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
-  { href: "/admin/productos", label: "Productos", icon: Package },
-  { href: "/admin/marcas", label: "Marcas", icon: Tags },
-  { href: "/admin/categorias", label: "Categorías", icon: FolderOpen },
-  { href: "/admin/clientes", label: "Clientes", icon: Users },
-  { href: "/admin/configuracion", label: "Configuración", icon: Settings },
+  {
+    href: "/admin/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    permission: "dashboard.view" as AdminPermission,
+  },
+  {
+    href: "/admin/pedidos",
+    label: "Pedidos",
+    icon: ShoppingBag,
+    permission: "orders.view" as AdminPermission,
+  },
+  {
+    href: "/admin/productos",
+    label: "Productos",
+    icon: Package,
+    permission: "products.view" as AdminPermission,
+  },
+  {
+    href: "/admin/marcas",
+    label: "Marcas",
+    icon: Tags,
+    permission: "brands.view" as AdminPermission,
+  },
+  {
+    href: "/admin/categorias",
+    label: "Categorias",
+    icon: FolderOpen,
+    permission: "categories.view" as AdminPermission,
+  },
+  {
+    href: "/admin/clientes",
+    label: "Clientes",
+    icon: Users,
+    permission: "customers.view" as AdminPermission,
+  },
+  {
+    href: "/admin/cupones",
+    label: "Cupones",
+    icon: TicketPercent,
+    permission: "coupons.view" as AdminPermission,
+  },
+  {
+    href: "/admin/resenas",
+    label: "Resenas",
+    icon: MessageSquareQuote,
+    permission: "reviews.view" as AdminPermission,
+  },
+  {
+    href: "/admin/contenido",
+    label: "Contenido",
+    icon: FileText,
+    permission: "content.view" as AdminPermission,
+  },
+  {
+    href: "/admin/configuracion",
+    label: "Configuracion",
+    icon: Settings,
+    permission: "settings.view" as AdminPermission,
+  },
 ];
 
 interface SidebarProps {
@@ -37,16 +97,18 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const visibleNavItems = navItems.filter((item) =>
+    hasAdminPermission(userRole as never, item.permission)
+  );
+
   const navContent = (
     <>
-      {/* Logo */}
       <div className="px-6 py-6">
         <Logo variant="light" href="/admin/dashboard" />
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-3 space-y-0.5">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/admin/dashboard" &&
@@ -71,7 +133,6 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
         })}
       </nav>
 
-      {/* User info */}
       <div className="border-t border-white/10 px-6 py-4">
         <div className="text-sm text-white/80">{userName}</div>
         <div className="text-xs text-white/40">{userRole}</div>
@@ -81,7 +142,7 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
             className="flex items-center gap-2 text-xs text-white/40 hover:text-white transition-colors"
           >
             <LogOut className="h-3.5 w-3.5" />
-            Cerrar sesión
+            Cerrar sesion
           </button>
         </form>
       </div>
@@ -90,7 +151,6 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile toggle */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
@@ -99,7 +159,6 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -107,12 +166,10 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar - desktop */}
       <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:fixed lg:inset-y-0 bg-black">
         {navContent}
       </aside>
 
-      {/* Sidebar - mobile */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-black transition-transform duration-300 lg:hidden",

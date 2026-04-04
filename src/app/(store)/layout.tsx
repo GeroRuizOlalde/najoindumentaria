@@ -21,27 +21,32 @@ export default async function StoreLayout({
     getCustomerSession(),
   ]);
 
-  const navCategories = categories.map((c) => ({
-    name: c.name,
-    slug: c.slug,
+  const navCategories = categories.map((category) => ({
+    name: category.name,
+    slug: category.slug,
   }));
-  const navBrands = brands.map((b) => ({ name: b.name, slug: b.slug }));
+  const navBrands = brands.map((brand) => ({ name: brand.name, slug: brand.slug }));
 
   return (
     <CartProvider>
-    <div className="flex min-h-screen flex-col bg-white">
-      <Navbar categories={navCategories} brands={navBrands} isLoggedIn={!!customerSession} />
-      <main className="flex-1">{children}</main>
-      <Footer
-        instagramUrl={settings.instagram_url}
-        tiktokUrl={settings.tiktok_url}
-        whatsappNumber={settings.whatsapp_number}
-        companyEmail={settings.company_email}
-      />
-      {settings.whatsapp_number && (
-        <WhatsAppButton phoneNumber={settings.whatsapp_number} />
-      )}
-    </div>
+      <div className="flex min-h-screen flex-col bg-white">
+        <Navbar
+          categories={navCategories}
+          brands={navBrands}
+          isLoggedIn={!!customerSession}
+        />
+        <main className="flex-1">{children}</main>
+        <Footer
+          instagramUrl={settings.instagram_url}
+          tiktokUrl={settings.tiktok_url}
+          whatsappNumber={settings.whatsapp_number}
+          companyEmail={settings.company_email}
+          tagline={settings.content_footer_tagline}
+        />
+        {settings.whatsapp_number && (
+          <WhatsAppButton phoneNumber={settings.whatsapp_number} />
+        )}
+      </div>
     </CartProvider>
   );
 }

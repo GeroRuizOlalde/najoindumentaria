@@ -2,6 +2,7 @@ import { getSettings } from "@/lib/queries/settings";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardTitle } from "@/components/ui/card";
 import { SettingsForm } from "@/components/admin/settings-form";
+import { requireAdminPermission } from "@/lib/admin-permissions";
 
 const BANK_FIELDS = [
   { key: "bank_name", label: "Banco" },
@@ -36,6 +37,7 @@ const ARCHIVE_FIELDS = [
 ];
 
 export default async function SettingsPage() {
+  await requireAdminPermission("settings.view");
   const { map } = await getSettings();
 
   const sections = [

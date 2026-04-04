@@ -1,10 +1,40 @@
 import { prisma } from "@/lib/prisma";
 
-export async function getBrands() {
-  return prisma.brand.findMany({
-    orderBy: { sortOrder: "asc" },
-    include: { _count: { select: { products: true } } },
-  });
+interface BrandFilters {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export async function getBrands(filters: BrandFilters = {}) {
+  const { search, page = 1, limit = 20 } = filters;
+
+  const where = search
+    ? {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { slug: { contains: search, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
+  const [brands, total] = await Promise.all([
+    prisma.brand.findMany({
+      where,
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      skip: (page - 1) * limit,
+      take: limit,
+      include: { _count: { select: { products: true } } },
+    }),
+    prisma.brand.count({ where }),
+  ]);
+
+  return {
+    brands,
+    total,
+    totalPages: Math.ceil(total / limit),
+    currentPage: page,
+  };
 }
 
 export async function getActiveBrands() {

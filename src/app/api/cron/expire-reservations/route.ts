@@ -18,7 +18,18 @@ export async function GET(request: Request) {
       status: "PENDING",
       expiresAt: { lte: now },
     },
-    select: { id: true, productId: true, sizeLabel: true },
+    select: {
+      id: true,
+      productId: true,
+      sizeLabel: true,
+      items: {
+        select: {
+          productId: true,
+          sizeLabel: true,
+          quantity: true,
+        },
+      },
+    },
   });
 
   let expiredCount = 0;
@@ -43,15 +54,30 @@ export async function GET(request: Request) {
       });
 
       // Restore stock
-      if (order.productId && order.sizeLabel) {
-        await tx.productSize.updateMany({
-          where: {
-            productId: order.productId,
-            sizeLabel: order.sizeLabel,
-          },
-          data: { stock: { increment: 1 }, isAvailable: true },
-        });
-      }
+      const itemsToRestore =
+        order.items.length > 0
+          ? order.items
+          : order.productId && order.sizeLabel
+            ? [
+                {
+                  productId: order.productId,
+                  sizeLabel: order.sizeLabel,
+                  quantity: 1,
+                },
+              ]
+            : [];
+
+      await Promise.all(
+        itemsToRestore.map((item) =>
+          tx.productSize.updateMany({
+            where: {
+              productId: item.productId,
+              sizeLabel: item.sizeLabel,
+            },
+            data: { stock: { increment: item.quantity }, isAvailable: true },
+          })
+        )
+      );
     });
 
     expiredCount++;

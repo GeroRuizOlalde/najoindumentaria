@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { brandSchema } from "@/lib/validations/brand";
 import { revalidatePath } from "next/cache";
 import { slugify } from "@/lib/utils";
+import { getAdminActionSession } from "@/lib/admin-permissions";
+import { redirect } from "next/navigation";
 
 export type ActionResult = {
   success?: boolean;
@@ -14,9 +16,13 @@ export async function createBrand(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("brands.manage");
+  if (!session) return { error: "No autorizado." };
+
   const raw = {
     name: formData.get("name") as string,
-    slug: formData.get("slug") as string || slugify(formData.get("name") as string),
+    slug:
+      ((formData.get("slug") as string) || slugify(formData.get("name") as string)),
     logo: (formData.get("logo") as string) || null,
     description: (formData.get("description") as string) || null,
     banner: (formData.get("banner") as string) || null,
@@ -32,10 +38,11 @@ export async function createBrand(
   try {
     await prisma.brand.create({ data: result.data });
     revalidatePath("/admin/marcas");
-    return { success: true };
   } catch {
     return { error: "Error al crear la marca. Puede que el nombre ya exista." };
   }
+
+  redirect("/admin/marcas");
 }
 
 export async function updateBrand(
@@ -43,9 +50,13 @@ export async function updateBrand(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("brands.manage");
+  if (!session) return { error: "No autorizado." };
+
   const raw = {
     name: formData.get("name") as string,
-    slug: formData.get("slug") as string || slugify(formData.get("name") as string),
+    slug:
+      ((formData.get("slug") as string) || slugify(formData.get("name") as string)),
     logo: (formData.get("logo") as string) || null,
     description: (formData.get("description") as string) || null,
     banner: (formData.get("banner") as string) || null,
@@ -61,13 +72,17 @@ export async function updateBrand(
   try {
     await prisma.brand.update({ where: { id }, data: result.data });
     revalidatePath("/admin/marcas");
-    return { success: true };
   } catch {
     return { error: "Error al actualizar la marca." };
   }
+
+  redirect("/admin/marcas");
 }
 
 export async function deleteBrand(id: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("brands.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     const brand = await prisma.brand.findUnique({
       where: { id },
@@ -89,6 +104,9 @@ export async function deleteBrand(id: string): Promise<ActionResult> {
 }
 
 export async function deleteAllBrands(): Promise<ActionResult> {
+  const session = await getAdminActionSession("brands.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.orderStatusHistory.deleteMany();
@@ -110,6 +128,9 @@ export async function deleteAllBrands(): Promise<ActionResult> {
 }
 
 export async function toggleBrandActive(id: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("brands.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     const brand = await prisma.brand.findUnique({ where: { id } });
     if (!brand) return { error: "Marca no encontrada." };

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/shared/logo";
 import { MobileMenu } from "@/components/store/mobile-menu";
-import { Menu, Search, User } from "lucide-react";
+import { Menu, Search, User, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CartIcon } from "@/components/store/cart-icon";
 
@@ -157,11 +157,18 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
             </Link>
             <CartIcon />
             <Link
+              href="/shop"
+              className="p-2 text-gray-text hover:text-black transition-colors"
+              aria-label="Buscar en catalogo"
+            >
+              <Search className="h-5 w-5" />
+            </Link>
+            <Link
               href="/seguimiento"
               className="p-2 text-gray-text hover:text-black transition-colors"
               aria-label="Seguimiento de pedido"
             >
-              <Search className="h-5 w-5" />
+              <Package className="h-5 w-5" />
             </Link>
           </div>
         </div>

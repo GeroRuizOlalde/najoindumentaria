@@ -5,6 +5,7 @@ import { reservationSchema } from "@/lib/validations/reservation";
 import { generateOrderCode } from "@/lib/utils";
 import { RESERVATION_EXPIRY_HOURS } from "@/lib/constants";
 import { sendReservationEmail } from "@/lib/email/send-reservation-email";
+import { validateCoupon } from "@/lib/coupons";
 
 export type ReservationResult = {
   success?: boolean;
@@ -30,6 +31,8 @@ export async function createReservation(
     deliveryMethod: formData.get("deliveryMethod"),
     preferredContact: formData.get("preferredContact") || "WHATSAPP",
     customerNotes: formData.get("customerNotes") || null,
+    couponCode:
+      (formData.get("couponCode") as string)?.trim().toUpperCase() || null,
     acceptPolicies: formData.get("acceptPolicies") === "true" ? true : undefined,
   };
 
@@ -61,6 +64,50 @@ export async function createReservation(
     const orderCode = generateOrderCode();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + RESERVATION_EXPIRY_HOURS);
+    const subtotalAmount = Number(size.product.price);
+
+    let appliedCoupon:
+      | {
+          id: string;
+          code: string;
+          discountAmount: number;
+        }
+      | null = null;
+
+    if (data.couponCode) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: data.couponCode },
+      });
+
+      const couponValidation = validateCoupon(
+        coupon
+          ? {
+              active: coupon.active,
+              discountType: coupon.discountType,
+              value: Number(coupon.value),
+              minAmount: coupon.minAmount ? Number(coupon.minAmount) : null,
+              maxDiscount: coupon.maxDiscount ? Number(coupon.maxDiscount) : null,
+              usageLimit: coupon.usageLimit,
+              usedCount: coupon.usedCount,
+              startsAt: coupon.startsAt,
+              endsAt: coupon.endsAt,
+            }
+          : null,
+        subtotalAmount
+      );
+
+      if (!couponValidation.valid) {
+        return { error: couponValidation.error };
+      }
+
+      appliedCoupon = {
+        id: coupon!.id,
+        code: coupon!.code,
+        discountAmount: couponValidation.discountAmount ?? 0,
+      };
+    }
+
+    const finalAmount = subtotalAmount - (appliedCoupon?.discountAmount ?? 0);
 
     const order = await prisma.$transaction(async (tx) => {
       // Decrement stock
@@ -106,7 +153,11 @@ export async function createReservation(
           customerId: customer.id,
           productId: data.productId,
           sizeLabel: size.sizeLabel,
-          amount: size.product.price,
+          amount: finalAmount,
+          subtotalAmount,
+          discountAmount: appliedCoupon?.discountAmount ?? 0,
+          couponId: appliedCoupon?.id,
+          couponCode: appliedCoupon?.code,
           status: "PENDING",
           deliveryMethod: data.deliveryMethod,
           shippingAddress:
@@ -117,6 +168,13 @@ export async function createReservation(
           expiresAt,
         },
       });
+
+      if (appliedCoupon) {
+        await tx.coupon.update({
+          where: { id: appliedCoupon.id },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
 
       // Create initial status history
       await tx.orderStatusHistory.create({
@@ -141,7 +199,7 @@ export async function createReservation(
         productName: size.product.name,
         brandName: size.product.brand.name,
         sizeLabel: size.sizeLabel,
-        price: Number(size.product.price),
+        price: finalAmount,
         expiresAt,
       });
     } catch (emailError) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createCartReservation } from "@/lib/actions/cart-reservation";
 import type { CartReservationResult } from "@/lib/actions/cart-reservation";
@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/constants";
 import { ReservationSuccess } from "@/components/store/reservation-success";
 import { formatPriceFromDecimal } from "@/lib/utils";
-import { useEffect } from "react";
 
 interface CustomerData {
   name: string;
@@ -50,18 +49,16 @@ export function CartReservationClient({
     initialState
   );
 
-  // Clear cart on successful reservation
   useEffect(() => {
     if (state.success) {
       clearCart();
     }
   }, [state.success, clearCart]);
 
-  // Redirect if cart is empty and no success
   if (items.length === 0 && !state.success) {
     return (
-      <div className="text-center py-10">
-        <p className="text-gray-text mb-4">Tu carrito está vacío.</p>
+      <div className="py-10 text-center">
+        <p className="mb-4 text-gray-text">Tu carrito esta vacio.</p>
         <Button onClick={() => router.push("/shop")}>Ver productos</Button>
       </div>
     );
@@ -79,27 +76,33 @@ export function CartReservationClient({
 
   return (
     <>
-      <h1 className="font-heading text-2xl font-bold mb-8">Completá tu reserva</h1>
+      <h1 className="mb-8 font-heading text-2xl font-bold">Completa tu reserva</h1>
 
       <form action={action} className="space-y-6">
-        <input type="hidden" name="items" value={JSON.stringify(
-          items.map((i) => ({
-            productId: i.productId,
-            sizeId: i.sizeId,
-            sizeLabel: i.sizeLabel,
-            quantity: i.quantity,
-            price: i.price,
-            productName: i.productName,
-          }))
-        )} />
+        <input
+          type="hidden"
+          name="items"
+          value={JSON.stringify(
+            items.map((item) => ({
+              productId: item.productId,
+              sizeId: item.sizeId,
+              sizeLabel: item.sizeLabel,
+              quantity: item.quantity,
+              price: item.price,
+              productName: item.productName,
+            }))
+          )}
+        />
 
-        {/* Cart summary */}
-        <div className="bg-off-white p-4 space-y-3">
+        <div className="space-y-3 bg-off-white p-4">
           <p className="text-xs uppercase tracking-wider text-gray-text">
             Tu reserva ({items.length} {items.length === 1 ? "producto" : "productos"})
           </p>
           {items.map((item) => (
-            <div key={`${item.productId}-${item.sizeId}`} className="flex justify-between text-sm">
+            <div
+              key={`${item.productId}-${item.sizeId}`}
+              className="flex justify-between text-sm"
+            >
               <span>
                 {item.brandName} {item.productName}{" "}
                 <span className="text-gray-text">
@@ -111,22 +114,21 @@ export function CartReservationClient({
               </span>
             </div>
           ))}
-          <div className="border-t border-border pt-2 flex justify-between font-medium">
+          <div className="flex justify-between border-t border-border pt-2 font-medium">
             <span>Total</span>
             <span>{formatPriceFromDecimal(totalPrice)}</span>
           </div>
         </div>
 
         {state.error && (
-          <div className="bg-error/5 border border-error/20 p-3 text-sm text-error">
+          <div className="border border-error/20 bg-error/5 p-3 text-sm text-error">
             {state.error}
           </div>
         )}
 
-        {/* Personal info */}
         <div>
-          <h3 className="text-sm font-medium mb-3">Datos personales</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <h3 className="mb-3 text-sm font-medium">Datos personales</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               name="name"
               label="Nombre completo"
@@ -144,7 +146,7 @@ export function CartReservationClient({
             />
             <Input
               name="phone"
-              label="Teléfono / WhatsApp"
+              label="Telefono / WhatsApp"
               defaultValue={customer?.phone}
               required
               error={state.errors?.phone}
@@ -160,16 +162,18 @@ export function CartReservationClient({
           </div>
         </div>
 
-        {/* Location */}
         <div>
-          <h3 className="text-sm font-medium mb-3">Ubicación</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <h3 className="mb-3 text-sm font-medium">Ubicacion</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Select
               name="province"
               label="Provincia"
-              placeholder="Seleccioná una provincia"
+              placeholder="Selecciona una provincia"
               defaultValue={customer?.province}
-              options={PROVINCES.map((p) => ({ value: p, label: p }))}
+              options={PROVINCES.map((province) => ({
+                value: province,
+                label: province,
+              }))}
               error={state.errors?.province}
             />
             <Input
@@ -182,11 +186,10 @@ export function CartReservationClient({
           </div>
         </div>
 
-        {/* Delivery */}
         <div>
-          <h3 className="text-sm font-medium mb-3">Método de entrega</h3>
+          <h3 className="mb-3 text-sm font-medium">Metodo de entrega</h3>
           <div className="space-y-2">
-            <label className="flex items-center gap-3 border border-border p-3 cursor-pointer hover:border-black transition-colors">
+            <label className="flex cursor-pointer items-center gap-3 border border-border p-3 transition-colors hover:border-black">
               <input
                 type="radio"
                 name="deliveryMethod"
@@ -195,11 +198,11 @@ export function CartReservationClient({
                 className="accent-black"
               />
               <div>
-                <p className="text-sm font-medium">Envío a domicilio</p>
-                <p className="text-xs text-gray-text">Te enviamos a tu dirección</p>
+                <p className="text-sm font-medium">Envio a domicilio</p>
+                <p className="text-xs text-gray-text">Te enviamos a tu direccion</p>
               </div>
             </label>
-            <label className="flex items-center gap-3 border border-border p-3 cursor-pointer hover:border-black transition-colors">
+            <label className="flex cursor-pointer items-center gap-3 border border-border p-3 transition-colors hover:border-black">
               <input
                 type="radio"
                 name="deliveryMethod"
@@ -214,22 +217,25 @@ export function CartReservationClient({
           </div>
         </div>
 
-        {/* Shipping address */}
         <Input
           name="address"
-          label="Dirección de envío (opcional)"
+          label="Direccion de envio (opcional)"
           defaultValue={customer?.defaultAddress}
         />
 
-        {/* Notes */}
+        <Input
+          name="couponCode"
+          label="Cupon (opcional)"
+          placeholder="Ej: MAYO15"
+        />
+
         <Textarea
           name="customerNotes"
           label="Notas (opcional)"
-          placeholder="Algún comentario o consulta..."
+          placeholder="Algun comentario o consulta..."
         />
 
-        {/* Accept policies */}
-        <label className="flex items-start gap-3 cursor-pointer">
+        <label className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
             name="acceptPolicies"
@@ -237,17 +243,13 @@ export function CartReservationClient({
             required
             className="mt-0.5 accent-black"
           />
-          <span className="text-xs text-gray-text leading-relaxed">
+          <span className="text-xs leading-relaxed text-gray-text">
             Acepto las{" "}
-            <a
-              href="/politicas"
-              target="_blank"
-              className="underline hover:text-black"
-            >
-              políticas de compra
+            <a href="/politicas" target="_blank" className="underline hover:text-black">
+              politicas de compra
             </a>
             . Entiendo que tengo 48 horas para realizar la transferencia o la
-            reserva será cancelada automáticamente.
+            reserva sera cancelada automaticamente.
           </span>
         </label>
         {state.errors?.acceptPolicies && (

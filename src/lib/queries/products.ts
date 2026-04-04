@@ -12,10 +12,23 @@ interface ProductFilters {
   sort?: string;
   page?: number;
   limit?: number;
+  availableSizesOnly?: boolean;
 }
 
 export async function getProducts(filters: ProductFilters = {}) {
-  const { brandId, categoryId, brandSlug, categorySlug, status, featured, search, sort, page = 1, limit = 12 } = filters;
+  const {
+    brandId,
+    categoryId,
+    brandSlug,
+    categorySlug,
+    status,
+    featured,
+    search,
+    sort,
+    page = 1,
+    limit = 12,
+    availableSizesOnly = false,
+  } = filters;
 
   const where = {
     ...(brandId && { brandId }),
@@ -27,18 +40,32 @@ export async function getProducts(filters: ProductFilters = {}) {
     ...(search && {
       OR: [
         { name: { contains: search, mode: "insensitive" as const } },
+        { slug: { contains: search, mode: "insensitive" as const } },
+        {
+          shortDescription: {
+            contains: search,
+            mode: "insensitive" as const,
+          },
+        },
+        { description: { contains: search, mode: "insensitive" as const } },
         { brand: { name: { contains: search, mode: "insensitive" as const } } },
+        {
+          category: {
+            name: { contains: search, mode: "insensitive" as const },
+          },
+        },
       ],
     }),
   };
 
-  const orderBy = sort === "price_asc"
-    ? [{ price: "asc" as const }]
-    : sort === "price_desc"
-    ? [{ price: "desc" as const }]
-    : sort === "newest"
-    ? [{ createdAt: "desc" as const }]
-    : [{ sortOrder: "asc" as const }, { createdAt: "desc" as const }];
+  const orderBy =
+    sort === "price_asc"
+      ? [{ price: "asc" as const }]
+      : sort === "price_desc"
+        ? [{ price: "desc" as const }]
+        : sort === "newest"
+          ? [{ createdAt: "desc" as const }]
+          : [{ sortOrder: "asc" as const }, { createdAt: "desc" as const }];
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
@@ -49,7 +76,14 @@ export async function getProducts(filters: ProductFilters = {}) {
       include: {
         brand: { select: { name: true, slug: true } },
         category: { select: { name: true, slug: true } },
-        sizes: { select: { sizeLabel: true, isAvailable: true } },
+        sizes: availableSizesOnly
+          ? {
+              where: { isAvailable: true, stock: { gt: 0 } },
+              select: { id: true, sizeLabel: true, isAvailable: true, stock: true },
+            }
+          : {
+              select: { id: true, sizeLabel: true, isAvailable: true, stock: true },
+            },
       },
     }),
     prisma.product.count({ where }),
@@ -81,6 +115,18 @@ export async function getProductBySlug(slug: string) {
       brand: { select: { name: true, slug: true } },
       category: { select: { name: true, slug: true } },
       sizes: { orderBy: { sizeLabel: "asc" } },
+      reviews: {
+        where: { status: "APPROVED" },
+        orderBy: { createdAt: "desc" },
+        include: {
+          customer: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 }
@@ -92,7 +138,10 @@ export async function getFeaturedProducts(limit = 8) {
     orderBy: { sortOrder: "asc" },
     include: {
       brand: { select: { name: true, slug: true } },
-      sizes: { where: { isAvailable: true }, select: { sizeLabel: true } },
+      sizes: {
+        where: { isAvailable: true, stock: { gt: 0 } },
+        select: { id: true, sizeLabel: true, stock: true },
+      },
     },
   });
 }
@@ -112,7 +161,10 @@ export async function getRelatedProducts(
     orderBy: { createdAt: "desc" },
     include: {
       brand: { select: { name: true, slug: true } },
-      sizes: { where: { isAvailable: true }, select: { sizeLabel: true } },
+      sizes: {
+        where: { isAvailable: true, stock: { gt: 0 } },
+        select: { id: true, sizeLabel: true, stock: true },
+      },
     },
   });
 }
@@ -124,7 +176,10 @@ export async function getNewProducts(limit = 8) {
     orderBy: { createdAt: "desc" },
     include: {
       brand: { select: { name: true, slug: true } },
-      sizes: { where: { isAvailable: true }, select: { sizeLabel: true } },
+      sizes: {
+        where: { isAvailable: true, stock: { gt: 0 } },
+        select: { id: true, sizeLabel: true, stock: true },
+      },
     },
   });
 }

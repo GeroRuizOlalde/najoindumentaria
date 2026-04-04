@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Users } from "lucide-react";
 import { getCustomers } from "@/lib/queries/customers";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -9,22 +11,38 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { Users } from "lucide-react";
-import Link from "next/link";
 import { formatDateAR } from "@/lib/utils";
 import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
 import { deleteAllCustomers } from "@/lib/actions/customers";
+import {
+  hasAdminPermission,
+  requireAdminPermission,
+} from "@/lib/admin-permissions";
+import { ListToolbar } from "@/components/admin/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
 
 interface Props {
   searchParams: Promise<{ page?: string; search?: string }>;
 }
 
 export default async function CustomersPage({ searchParams }: Props) {
+  const session = await requireAdminPermission("customers.view");
+  const canManage = hasAdminPermission(session.user.role, "customers.manage");
   const params = await searchParams;
-  const { customers, total } = await getCustomers({
-    page: parseInt(params.page || "1"),
+  const currentPage = parseInt(params.page || "1");
+
+  const { customers, total, totalPages } = await getCustomers({
+    page: currentPage,
     search: params.search,
   });
+
+  const buildUrl = (page: number) => {
+    const qs = new URLSearchParams();
+    if (params.search) qs.set("search", params.search);
+    if (page > 1) qs.set("page", String(page));
+    const query = qs.toString();
+    return query ? `/admin/clientes?${query}` : "/admin/clientes";
+  };
 
   return (
     <>
@@ -32,64 +50,82 @@ export default async function CustomersPage({ searchParams }: Props) {
         title="Clientes"
         description={`${total} clientes registrados`}
         action={
-          <BulkDeleteButton
-            action={deleteAllCustomers}
-            confirmTitle="Eliminar todos los clientes"
-            confirmDescription="Se eliminarán permanentemente TODOS los clientes y sus pedidos asociados. Esta acción no se puede deshacer."
-          />
+          canManage ? (
+            <BulkDeleteButton
+              action={deleteAllCustomers}
+              confirmTitle="Eliminar todos los clientes"
+              confirmDescription="Se eliminaran permanentemente TODOS los clientes y sus pedidos asociados. Esta accion no se puede deshacer."
+            />
+          ) : null
         }
+      />
+
+      <ListToolbar
+        search={params.search}
+        placeholder="Buscar por nombre, email o telefono"
+        resetHref="/admin/clientes"
       />
 
       {customers.length === 0 ? (
         <EmptyState
           icon={<Users className="h-12 w-12" />}
           title="Sin clientes"
-          description="Los clientes se crean automáticamente cuando hacen su primera reserva."
+          description="Los clientes se crean automaticamente cuando hacen su primera reserva."
         />
       ) : (
-        <div className="border border-border bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead>Pedidos</TableHead>
-                <TableHead>Último pedido</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>
-                    <Link
-                      href={`/admin/clientes/${customer.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {customer.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-gray-text">
-                    {customer.email}
-                  </TableCell>
-                  <TableCell className="text-gray-text">
-                    {customer.phone}
-                  </TableCell>
-                  <TableCell className="text-gray-text text-xs">
-                    {customer.city}, {customer.province}
-                  </TableCell>
-                  <TableCell>{customer._count.orders}</TableCell>
-                  <TableCell className="text-xs text-gray-text">
-                    {customer.orders[0]
-                      ? formatDateAR(customer.orders[0].createdAt, "dd/MM/yy")
-                      : "—"}
-                  </TableCell>
+        <>
+          <div className="border border-border bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Telefono</TableHead>
+                  <TableHead>Ubicacion</TableHead>
+                  <TableHead>Pedidos</TableHead>
+                  <TableHead>Ultimo pedido</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {customers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell>
+                      <Link
+                        href={`/admin/clientes/${customer.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {customer.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-gray-text">
+                      {customer.email}
+                    </TableCell>
+                    <TableCell className="text-gray-text">
+                      {customer.phone}
+                    </TableCell>
+                    <TableCell className="text-gray-text text-xs">
+                      {customer.city}, {customer.province}
+                    </TableCell>
+                    <TableCell>{customer._count.orders}</TableCell>
+                    <TableCell className="text-xs text-gray-text">
+                      {customer.orders[0]
+                        ? formatDateAR(customer.orders[0].createdAt, "dd/MM/yy")
+                        : "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              buildUrl={buildUrl}
+            />
+          </div>
+        </>
       )}
     </>
   );

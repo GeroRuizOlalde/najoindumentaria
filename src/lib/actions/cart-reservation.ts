@@ -5,6 +5,7 @@ import { z } from "zod";
 import { generateOrderCode } from "@/lib/utils";
 import { RESERVATION_EXPIRY_HOURS } from "@/lib/constants";
 import { sendReservationEmail } from "@/lib/email/send-reservation-email";
+import { validateCoupon } from "@/lib/coupons";
 
 const cartItemSchema = z.object({
   productId: z.string().min(1),
@@ -16,18 +17,19 @@ const cartItemSchema = z.object({
 });
 
 const cartReservationSchema = z.object({
-  items: z.array(cartItemSchema).min(1, "El carrito está vacío"),
+  items: z.array(cartItemSchema).min(1, "El carrito estÃ¡ vacÃ­o"),
   name: z.string().min(2, "Nombre requerido"),
-  email: z.string().email("Email inválido"),
-  phone: z.string().min(8, "Teléfono requerido"),
+  email: z.string().email("Email invÃ¡lido"),
+  phone: z.string().min(8, "TelÃ©fono requerido"),
   province: z.string().min(1, "Provincia requerida"),
   city: z.string().min(1, "Ciudad requerida"),
   address: z.string().optional().nullable(),
   deliveryMethod: z.enum(["SHIPPING", "PICKUP"]),
   preferredContact: z.enum(["WHATSAPP", "EMAIL"]).default("WHATSAPP"),
   customerNotes: z.string().optional().nullable(),
+  couponCode: z.string().optional().nullable(),
   acceptPolicies: z.literal(true, {
-    error: "Debés aceptar las políticas",
+    error: "DebÃ©s aceptar las polÃ­ticas",
   }),
 });
 
@@ -45,9 +47,11 @@ export async function createCartReservation(
 ): Promise<CartReservationResult> {
   let items: z.infer<typeof cartItemSchema>[];
   try {
-    items = JSON.parse(formData.get("items") as string || "[]");
+    items = JSON.parse(((formData.get("items") as string) || "[]")) as z.infer<
+      typeof cartItemSchema
+    >[];
   } catch {
-    return { error: "Datos del carrito inválidos." };
+    return { error: "Datos del carrito invÃ¡lidos." };
   }
 
   const raw = {
@@ -61,7 +65,10 @@ export async function createCartReservation(
     deliveryMethod: formData.get("deliveryMethod"),
     preferredContact: formData.get("preferredContact") || "WHATSAPP",
     customerNotes: formData.get("customerNotes") || null,
-    acceptPolicies: formData.get("acceptPolicies") === "true" ? true : undefined,
+    couponCode:
+      (formData.get("couponCode") as string)?.trim().toUpperCase() || null,
+    acceptPolicies:
+      formData.get("acceptPolicies") === "true" ? true : undefined,
   };
 
   const parsed = cartReservationSchema.safeParse(raw);
@@ -77,43 +84,103 @@ export async function createCartReservation(
   const data = parsed.data;
 
   try {
-    // Verify all sizes exist and have stock
-    const sizeIds = data.items.map((i) => i.sizeId);
+    const sizeIds = data.items.map((item) => item.sizeId);
     const sizes = await prisma.productSize.findMany({
       where: { id: { in: sizeIds } },
-      include: { product: { select: { id: true, name: true, price: true, brand: { select: { name: true } } } } },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            brand: { select: { name: true } },
+          },
+        },
+      },
     });
 
-    const sizeMap = new Map(sizes.map((s) => [s.id, s]));
+    const sizeMap = new Map(sizes.map((size) => [size.id, size]));
     for (const item of data.items) {
       const size = sizeMap.get(item.sizeId);
-      if (!size) return { error: `Talle no encontrado para ${item.productName}.` };
-      if (!size.isAvailable || size.stock < item.quantity)
-        return { error: `Stock insuficiente para ${item.productName} (talle ${item.sizeLabel}).` };
-      if (size.productId !== item.productId)
-        return { error: `El talle no corresponde al producto ${item.productName}.` };
+      if (!size) {
+        return { error: `Talle no encontrado para ${item.productName}.` };
+      }
+      if (!size.isAvailable || size.stock < item.quantity) {
+        return {
+          error: `Stock insuficiente para ${item.productName} (talle ${item.sizeLabel}).`,
+        };
+      }
+      if (size.productId !== item.productId) {
+        return {
+          error: `El talle no corresponde al producto ${item.productName}.`,
+        };
+      }
     }
 
     const orderCode = generateOrderCode();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + RESERVATION_EXPIRY_HOURS);
 
-    // Calculate total amount
-    const totalAmount = data.items.reduce(
-      (sum, item) => sum + Number(sizeMap.get(item.sizeId)!.product.price) * item.quantity,
+    const subtotalAmount = data.items.reduce(
+      (sum, item) =>
+        sum + Number(sizeMap.get(item.sizeId)!.product.price) * item.quantity,
       0
     );
 
+    let appliedCoupon:
+      | {
+          id: string;
+          code: string;
+          discountAmount: number;
+        }
+      | null = null;
+
+    if (data.couponCode) {
+      const coupon = await prisma.coupon.findUnique({
+        where: { code: data.couponCode },
+      });
+
+      const couponValidation = validateCoupon(
+        coupon
+          ? {
+              active: coupon.active,
+              discountType: coupon.discountType,
+              value: Number(coupon.value),
+              minAmount: coupon.minAmount ? Number(coupon.minAmount) : null,
+              maxDiscount: coupon.maxDiscount ? Number(coupon.maxDiscount) : null,
+              usageLimit: coupon.usageLimit,
+              usedCount: coupon.usedCount,
+              startsAt: coupon.startsAt,
+              endsAt: coupon.endsAt,
+            }
+          : null,
+        subtotalAmount
+      );
+
+      if (!couponValidation.valid) {
+        return { error: couponValidation.error };
+      }
+
+      appliedCoupon = {
+        id: coupon!.id,
+        code: coupon!.code,
+        discountAmount: couponValidation.discountAmount ?? 0,
+      };
+    }
+
+    const totalAmount = subtotalAmount - (appliedCoupon?.discountAmount ?? 0);
+
     const order = await prisma.$transaction(async (tx) => {
-      // Decrement stock for all items
       for (const item of data.items) {
         const updated = await tx.productSize.update({
           where: { id: item.sizeId },
           data: { stock: { decrement: item.quantity } },
         });
+
         if (updated.stock < 0) {
           throw new Error(`STOCK_EXHAUSTED:${item.productName}`);
         }
+
         if (updated.stock === 0) {
           await tx.productSize.update({
             where: { id: item.sizeId },
@@ -122,7 +189,6 @@ export async function createCartReservation(
         }
       }
 
-      // Find or create customer
       const customer = await tx.customer.upsert({
         where: { email: data.email },
         update: {
@@ -142,7 +208,6 @@ export async function createCartReservation(
         },
       });
 
-      // Create order (no single productId/sizeLabel for multi-item)
       const newOrder = await tx.order.create({
         data: {
           orderCode,
@@ -150,6 +215,10 @@ export async function createCartReservation(
           productId: data.items.length === 1 ? data.items[0].productId : null,
           sizeLabel: data.items.length === 1 ? data.items[0].sizeLabel : null,
           amount: totalAmount,
+          subtotalAmount,
+          discountAmount: appliedCoupon?.discountAmount ?? 0,
+          couponId: appliedCoupon?.id,
+          couponCode: appliedCoupon?.code,
           status: "PENDING",
           deliveryMethod: data.deliveryMethod,
           shippingAddress:
@@ -161,7 +230,6 @@ export async function createCartReservation(
         },
       });
 
-      // Create order items
       await tx.orderItem.createMany({
         data: data.items.map((item) => ({
           orderId: newOrder.id,
@@ -172,7 +240,6 @@ export async function createCartReservation(
         })),
       });
 
-      // Create initial status history
       await tx.orderStatusHistory.create({
         data: {
           orderId: newOrder.id,
@@ -183,10 +250,16 @@ export async function createCartReservation(
         },
       });
 
+      if (appliedCoupon) {
+        await tx.coupon.update({
+          where: { id: appliedCoupon.id },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+
       return newOrder;
     });
 
-    // Send confirmation email (non-blocking)
     try {
       const firstItem = data.items[0];
       const firstSize = sizeMap.get(firstItem.sizeId)!;
@@ -194,9 +267,10 @@ export async function createCartReservation(
         customerName: data.name,
         customerEmail: data.email,
         orderCode: order.orderCode,
-        productName: data.items.length === 1
-          ? firstSize.product.name
-          : `${firstSize.product.name} y ${data.items.length - 1} más`,
+        productName:
+          data.items.length === 1
+            ? firstSize.product.name
+            : `${firstSize.product.name} y ${data.items.length - 1} mÃ¡s`,
         brandName: firstSize.product.brand.name,
         sizeLabel: data.items.length === 1 ? firstItem.sizeLabel : "Varios",
         price: totalAmount,
@@ -212,7 +286,8 @@ export async function createCartReservation(
       const productName = err.message.split(":")[1];
       return { error: `Lo sentimos, ${productName} se acaba de agotar.` };
     }
+
     console.error("Error creating cart reservation:", err);
-    return { error: "Error al crear la reserva. Intentá de nuevo." };
+    return { error: "Error al crear la reserva. IntentÃ¡ de nuevo." };
   }
 }

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getAdminActionSession } from "@/lib/admin-permissions";
 
 export type ActionResult = {
   success?: boolean;
@@ -9,6 +10,9 @@ export type ActionResult = {
 };
 
 export async function deleteAllCustomers(): Promise<ActionResult> {
+  const session = await getAdminActionSession("customers.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.orderStatusHistory.deleteMany();

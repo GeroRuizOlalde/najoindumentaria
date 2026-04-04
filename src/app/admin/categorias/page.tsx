@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { FolderOpen } from "lucide-react";
 import { getCategories } from "@/lib/queries/categories";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -10,71 +12,136 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
-import { FolderOpen } from "lucide-react";
-import Link from "next/link";
 import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
-import { deleteAllCategories } from "@/lib/actions/categories";
+import {
+  deleteAllCategories,
+  deleteCategory,
+  toggleCategoryActive,
+} from "@/lib/actions/categories";
+import {
+  hasAdminPermission,
+  requireAdminPermission,
+} from "@/lib/admin-permissions";
+import { ListToolbar } from "@/components/admin/list-toolbar";
+import { Pagination } from "@/components/ui/pagination";
+import { EntityRowActions } from "@/components/admin/entity-row-actions";
 
-export default async function CategoriesPage() {
-  const categories = await getCategories();
+interface Props {
+  searchParams: Promise<{ page?: string; search?: string }>;
+}
+
+export default async function CategoriesPage({ searchParams }: Props) {
+  const session = await requireAdminPermission("categories.view");
+  const canManage = hasAdminPermission(session.user.role, "categories.manage");
+  const params = await searchParams;
+
+  const { categories, total, currentPage, totalPages } = await getCategories({
+    page: parseInt(params.page || "1"),
+    search: params.search,
+  });
+
+  const buildUrl = (page: number) => {
+    const qs = new URLSearchParams();
+    if (params.search) qs.set("search", params.search);
+    if (page > 1) qs.set("page", String(page));
+    const query = qs.toString();
+    return query ? `/admin/categorias?${query}` : "/admin/categorias";
+  };
 
   return (
     <>
       <PageHeader
-        title="Categorías"
-        description="Gestioná las categorías de tu catálogo"
+        title="Categorias"
+        description={`${total} categorias cargadas`}
         action={
-          <div className="flex items-center gap-3">
-            <BulkDeleteButton
-              action={deleteAllCategories}
-              confirmTitle="Eliminar todas las categorías"
-              confirmDescription="Se eliminarán permanentemente TODAS las categorías, sus productos asociados y los pedidos relacionados. Esta acción no se puede deshacer."
-            />
-            <Link
-              href="/admin/categorias?new=true"
-              className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
-            >
-              Nueva categoría
-            </Link>
-          </div>
+          canManage ? (
+            <div className="flex items-center gap-3">
+              <BulkDeleteButton
+                action={deleteAllCategories}
+                confirmTitle="Eliminar todas las categorias"
+                confirmDescription="Se eliminarán permanentemente TODAS las categorías, sus productos asociados y los pedidos relacionados. Esta acción no se puede deshacer."
+              />
+              <Link
+                href="/admin/categorias/nueva"
+                className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
+              >
+                Nueva categoria
+              </Link>
+            </div>
+          ) : null
         }
+      />
+
+      <ListToolbar
+        search={params.search}
+        placeholder="Buscar por nombre o slug"
+        resetHref="/admin/categorias"
       />
 
       {categories.length === 0 ? (
         <EmptyState
           icon={<FolderOpen className="h-12 w-12" />}
-          title="Sin categorías"
+          title="Sin categorias"
           description="Creá tu primera categoría para empezar a cargar productos."
         />
       ) : (
-        <div className="border border-border bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Slug</TableHead>
-                <TableHead>Productos</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Orden</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((cat) => (
-                <TableRow key={cat.id}>
-                  <TableCell className="font-medium">{cat.name}</TableCell>
-                  <TableCell className="text-gray-text">{cat.slug}</TableCell>
-                  <TableCell>{cat._count.products}</TableCell>
-                  <TableCell>
-                    <Badge variant={cat.active ? "success" : "secondary"}>
-                      {cat.active ? "Activa" : "Inactiva"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{cat.sortOrder}</TableCell>
+        <>
+          <div className="border border-border bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Slug</TableHead>
+                  <TableHead>Productos</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Orden</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {categories.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell className="text-gray-text">
+                      {category.slug}
+                    </TableCell>
+                    <TableCell>{category._count.products}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={category.active ? "success" : "secondary"}
+                      >
+                        {category.active ? "Activa" : "Inactiva"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{category.sortOrder}</TableCell>
+                    <TableCell>
+                      <EntityRowActions
+                        editHref={`/admin/categorias/${category.id}/editar`}
+                        isActive={category.active}
+                        canManage={canManage}
+                        entityName={category.name}
+                        toggleLabel={{
+                          active: "Desactivar",
+                          inactive: "Activar",
+                        }}
+                        onToggle={() => toggleCategoryActive(category.id)}
+                        onDelete={() => deleteCategory(category.id)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              buildUrl={buildUrl}
+            />
+          </div>
+        </>
       )}
     </>
   );

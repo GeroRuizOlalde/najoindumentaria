@@ -27,6 +27,7 @@ export default async function ShopPage({ searchParams }: Props) {
       brandSlug: params.marca,
       search: params.search,
       sort: params.sort,
+      availableSizesOnly: true,
     }),
     getActiveCategories(),
     getActiveBrands(),

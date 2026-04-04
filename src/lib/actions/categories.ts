@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { categorySchema } from "@/lib/validations/category";
 import { revalidatePath } from "next/cache";
 import { slugify } from "@/lib/utils";
+import { getAdminActionSession } from "@/lib/admin-permissions";
+import { redirect } from "next/navigation";
 
 export type ActionResult = {
   success?: boolean;
@@ -14,9 +16,13 @@ export async function createCategory(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("categories.manage");
+  if (!session) return { error: "No autorizado." };
+
   const raw = {
     name: formData.get("name") as string,
-    slug: formData.get("slug") as string || slugify(formData.get("name") as string),
+    slug:
+      ((formData.get("slug") as string) || slugify(formData.get("name") as string)),
     image: (formData.get("image") as string) || null,
     description: (formData.get("description") as string) || null,
     sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
@@ -31,10 +37,13 @@ export async function createCategory(
   try {
     await prisma.category.create({ data: result.data });
     revalidatePath("/admin/categorias");
-    return { success: true };
   } catch {
-    return { error: "Error al crear la categoría. Puede que el nombre ya exista." };
+    return {
+      error: "Error al crear la categoria. Puede que el nombre ya exista.",
+    };
   }
+
+  redirect("/admin/categorias");
 }
 
 export async function updateCategory(
@@ -42,9 +51,13 @@ export async function updateCategory(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("categories.manage");
+  if (!session) return { error: "No autorizado." };
+
   const raw = {
     name: formData.get("name") as string,
-    slug: formData.get("slug") as string || slugify(formData.get("name") as string),
+    slug:
+      ((formData.get("slug") as string) || slugify(formData.get("name") as string)),
     image: (formData.get("image") as string) || null,
     description: (formData.get("description") as string) || null,
     sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
@@ -59,13 +72,17 @@ export async function updateCategory(
   try {
     await prisma.category.update({ where: { id }, data: result.data });
     revalidatePath("/admin/categorias");
-    return { success: true };
   } catch {
-    return { error: "Error al actualizar la categoría." };
+    return { error: "Error al actualizar la categoria." };
   }
+
+  redirect("/admin/categorias");
 }
 
 export async function deleteAllCategories(): Promise<ActionResult> {
+  const session = await getAdminActionSession("categories.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.orderStatusHistory.deleteMany();
@@ -82,11 +99,14 @@ export async function deleteAllCategories(): Promise<ActionResult> {
     revalidatePath("/shop");
     return { success: true };
   } catch {
-    return { error: "Error al eliminar las categorías." };
+    return { error: "Error al eliminar las categorias." };
   }
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("categories.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     const category = await prisma.category.findUnique({
       where: { id },
@@ -95,7 +115,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
 
     if (category && category._count.products > 0) {
       return {
-        error: "No se puede eliminar una categoría con productos asociados.",
+        error: "No se puede eliminar una categoria con productos asociados.",
       };
     }
 
@@ -103,6 +123,25 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     revalidatePath("/admin/categorias");
     return { success: true };
   } catch {
-    return { error: "Error al eliminar la categoría." };
+    return { error: "Error al eliminar la categoria." };
+  }
+}
+
+export async function toggleCategoryActive(id: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("categories.manage");
+  if (!session) return { error: "No autorizado." };
+
+  try {
+    const category = await prisma.category.findUnique({ where: { id } });
+    if (!category) return { error: "Categoria no encontrada." };
+
+    await prisma.category.update({
+      where: { id },
+      data: { active: !category.active },
+    });
+    revalidatePath("/admin/categorias");
+    return { success: true };
+  } catch {
+    return { error: "Error al cambiar el estado." };
   }
 }

@@ -1,18 +1,13 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/admin/sidebar";
 import { NotificationListener } from "@/components/admin/notification-listener";
+import { requireAdminPermission } from "@/lib/admin-permissions";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/login");
-  }
+  const session = await requireAdminPermission("dashboard.view");
 
   return (
     <div className="min-h-screen bg-off-white">

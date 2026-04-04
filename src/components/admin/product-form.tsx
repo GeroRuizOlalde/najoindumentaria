@@ -28,6 +28,7 @@ interface Category {
 interface Size {
   sizeLabel: string;
   isAvailable: boolean;
+  stock: number;
 }
 
 interface ProductFormProps {
@@ -65,9 +66,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
   );
   const [featured, setFeatured] = useState(product?.featured ?? false);
 
-  const action = product
-    ? updateProduct.bind(null, product.id)
-    : createProduct;
+  const action = product ? updateProduct.bind(null, product.id) : createProduct;
 
   const [state, formAction, isPending] = useActionState<ActionResult, FormData>(
     action,
@@ -86,16 +85,18 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
   }
 
   function removeImage(url: string) {
-    setImages(images.filter((i) => i !== url));
+    setImages(images.filter((image) => image !== url));
   }
 
   function loadSizePreset(preset: "shoe" | "clothing") {
     const presetSizes =
       preset === "shoe" ? COMMON_SHOE_SIZES : COMMON_CLOTHING_SIZES;
+
     setSizes(
-      presetSizes.map((s) => ({
-        sizeLabel: s,
+      presetSizes.map((size) => ({
+        sizeLabel: size,
         isAvailable: true,
+        stock: 1,
       }))
     );
     setSizePreset(preset);
@@ -104,23 +105,36 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
   function toggleSize(index: number) {
     const updated = [...sizes];
     updated[index].isAvailable = !updated[index].isAvailable;
+
+    if (!updated[index].isAvailable) {
+      updated[index].stock = 0;
+    } else if (updated[index].stock === 0) {
+      updated[index].stock = 1;
+    }
+
+    setSizes(updated);
+  }
+
+  function updateSizeStock(index: number, stock: number) {
+    const updated = [...sizes];
+    updated[index].stock = Math.max(0, stock);
+    updated[index].isAvailable = updated[index].stock > 0;
     setSizes(updated);
   }
 
   function addCustomSize() {
-    const label = prompt("Ingresá el talle:");
-    if (label && !sizes.find((s) => s.sizeLabel === label)) {
-      setSizes([...sizes, { sizeLabel: label, isAvailable: true }]);
+    const label = prompt("IngresÃ¡ el talle:");
+    if (label && !sizes.find((size) => size.sizeLabel === label)) {
+      setSizes([...sizes, { sizeLabel: label, isAvailable: true, stock: 1 }]);
     }
   }
 
   function removeSize(index: number) {
-    setSizes(sizes.filter((_, i) => i !== index));
+    setSizes(sizes.filter((_, currentIndex) => currentIndex !== index));
   }
 
   return (
     <form action={formAction} className="space-y-8 max-w-3xl">
-      {/* Hidden fields for complex data */}
       <input type="hidden" name="images" value={JSON.stringify(images)} />
       <input type="hidden" name="sizes" value={JSON.stringify(sizes)} />
       <input
@@ -129,10 +143,9 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         value={featured ? "true" : "false"}
       />
 
-      {/* Basic Info */}
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold">
-          Información básica
+          InformaciÃ³n bÃ¡sica
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
@@ -160,18 +173,24 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             id="brandId"
             name="brandId"
             label="Marca"
-            placeholder="Seleccioná una marca"
+            placeholder="SeleccionÃ¡ una marca"
             defaultValue={product?.brandId}
-            options={brands.map((b) => ({ value: b.id, label: b.name }))}
+            options={brands.map((brand) => ({
+              value: brand.id,
+              label: brand.name,
+            }))}
             required
           />
           <Select
             id="categoryId"
             name="categoryId"
-            label="Categoría"
-            placeholder="Seleccioná una categoría"
+            label="CategorÃ­a"
+            placeholder="SeleccionÃ¡ una categorÃ­a"
             defaultValue={product?.categoryId}
-            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            options={categories.map((category) => ({
+              value: category.id,
+              label: category.name,
+            }))}
             required
           />
         </div>
@@ -196,28 +215,26 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         </div>
       </section>
 
-      {/* Description */}
       <section className="space-y-4">
-        <h2 className="font-heading text-lg font-semibold">Descripción</h2>
+        <h2 className="font-heading text-lg font-semibold">DescripciÃ³n</h2>
         <Input
           id="shortDescription"
           name="shortDescription"
-          label="Descripción corta (max 300 caracteres)"
+          label="DescripciÃ³n corta (max 300 caracteres)"
           defaultValue={product?.shortDescription ?? ""}
           maxLength={300}
         />
         <Textarea
           id="description"
           name="description"
-          label="Descripción completa"
+          label="DescripciÃ³n completa"
           defaultValue={product?.description ?? ""}
           required
         />
       </section>
 
-      {/* Images */}
       <section className="space-y-4">
-        <h2 className="font-heading text-lg font-semibold">Imágenes</h2>
+        <h2 className="font-heading text-lg font-semibold">ImÃ¡genes</h2>
         <div className="flex gap-2 flex-wrap">
           <CldUploadWidget
             uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
@@ -228,17 +245,20 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
               multiple: true,
             }}
             onSuccess={(result) => {
-              if (typeof result.info === "object" && result.info && "secure_url" in result.info) {
-                setImages((prev) => [...prev, (result.info as { secure_url: string }).secure_url]);
+              if (
+                typeof result.info === "object" &&
+                result.info &&
+                "secure_url" in result.info
+              ) {
+                setImages((prev) => [
+                  ...prev,
+                  (result.info as { secure_url: string }).secure_url,
+                ]);
               }
             }}
           >
             {({ open }) => (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => open()}
-              >
+              <Button type="button" variant="secondary" onClick={() => open()}>
                 <Upload className="h-3.5 w-3.5 mr-1.5" />
                 Subir imagen
               </Button>
@@ -250,7 +270,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
               label=""
               value={newImageUrl}
               onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="O pegá una URL..."
+              placeholder="O pegÃ¡ una URL..."
               className="flex-1"
             />
             <Button
@@ -265,16 +285,13 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         </div>
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {images.map((url, i) => (
-              <div
-                key={url}
-                className="relative group border border-border p-1"
-              >
+            {images.map((url, index) => (
+              <div key={url} className="relative group border border-border p-1">
                 <div className="h-20 w-20 bg-off-white flex items-center justify-center text-xs text-gray-text overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={url}
-                    alt={`Imagen ${i + 1}`}
+                    alt={`Imagen ${index + 1}`}
                     className="h-full w-full object-cover"
                   />
                 </div>
@@ -285,7 +302,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
                 >
                   <X className="h-3 w-3" />
                 </button>
-                {i === 0 && (
+                {index === 0 && (
                   <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[10px] text-center">
                     Principal
                   </span>
@@ -296,7 +313,6 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         )}
       </section>
 
-      {/* Sizes */}
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold">Talles</h2>
         <div className="flex gap-2">
@@ -326,25 +342,37 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
           </Button>
         </div>
         {sizes.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {sizes.map((size, i) => (
+          <div className="space-y-2">
+            {sizes.map((size, index) => (
               <div
                 key={size.sizeLabel}
-                className="flex items-center gap-1 border border-border px-2 py-1"
+                className="grid grid-cols-[minmax(0,1fr)_110px_auto] items-center gap-3 border border-border px-3 py-2"
               >
                 <button
                   type="button"
-                  onClick={() => toggleSize(i)}
-                  className={`text-sm font-medium transition-colors ${
-                    size.isAvailable ? "text-black" : "text-gray-light line-through"
+                  onClick={() => toggleSize(index)}
+                  className={`text-sm font-medium text-left transition-colors ${
+                    size.isAvailable
+                      ? "text-black"
+                      : "text-gray-light line-through"
                   }`}
                 >
                   {size.sizeLabel}
                 </button>
+                <Input
+                  label=""
+                  type="number"
+                  min="0"
+                  value={size.stock}
+                  onChange={(e) =>
+                    updateSizeStock(index, parseInt(e.target.value || "0"))
+                  }
+                  className="py-1.5"
+                />
                 <button
                   type="button"
-                  onClick={() => removeSize(i)}
-                  className="text-gray-light hover:text-error ml-1"
+                  onClick={() => removeSize(index)}
+                  className="text-gray-light hover:text-error"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -354,7 +382,6 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         )}
       </section>
 
-      {/* Status & SEO */}
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold">
           Estado y visibilidad
@@ -390,28 +417,25 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         </label>
       </section>
 
-      {/* SEO */}
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold">SEO</h2>
         <Input
           id="metaTitle"
           name="metaTitle"
-          label="Meta título (max 70)"
+          label="Meta tÃ­tulo (max 70)"
           defaultValue={product?.metaTitle ?? ""}
           maxLength={70}
         />
         <Input
           id="metaDescription"
           name="metaDescription"
-          label="Meta descripción (max 160)"
+          label="Meta descripciÃ³n (max 160)"
           defaultValue={product?.metaDescription ?? ""}
           maxLength={160}
         />
       </section>
 
-      {state.error && (
-        <p className="text-sm text-error">{state.error}</p>
-      )}
+      {state.error && <p className="text-sm text-error">{state.error}</p>}
 
       <div className="flex gap-3">
         <Button type="submit" size="lg" loading={isPending}>

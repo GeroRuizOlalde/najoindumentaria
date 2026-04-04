@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { productSchema } from "@/lib/validations/product";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getAdminActionSession } from "@/lib/admin-permissions";
 
 export type ActionResult = {
   success?: boolean;
@@ -14,6 +15,9 @@ export async function createProduct(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("products.manage");
+  if (!session) return { error: "No autorizado." };
+
   const raw = {
     name: formData.get("name") as string,
     slug: formData.get("slug") as string,
@@ -49,7 +53,7 @@ export async function createProduct(
           create: sizes.map((s) => ({
             sizeLabel: s.sizeLabel,
             isAvailable: s.isAvailable,
-            stock: s.isAvailable ? 1 : 0,
+            stock: s.isAvailable ? s.stock : 0,
           })),
         },
       },
@@ -69,6 +73,9 @@ export async function updateProduct(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("products.manage");
+  if (!session) return { error: "No autorizado." };
+
   const raw = {
     name: formData.get("name") as string,
     slug: formData.get("slug") as string,
@@ -103,15 +110,46 @@ export async function updateProduct(
         data: productData,
       });
 
-      // Delete existing sizes and recreate
-      await tx.productSize.deleteMany({ where: { productId: id } });
-      await tx.productSize.createMany({
-        data: sizes.map((s) => ({
+      const existingSizes = await tx.productSize.findMany({
+        where: { productId: id },
+      });
+
+      const incomingLabels = new Set(sizes.map((size) => size.sizeLabel));
+
+      await Promise.all(
+        sizes.map((size) => {
+          const existing = existingSizes.find(
+            (current) => current.sizeLabel === size.sizeLabel
+          );
+
+          if (existing) {
+            return tx.productSize.update({
+              where: { id: existing.id },
+              data: {
+                isAvailable: size.isAvailable,
+                stock: size.isAvailable ? size.stock : 0,
+              },
+            });
+          }
+
+          return tx.productSize.create({
+            data: {
+              productId: id,
+              sizeLabel: size.sizeLabel,
+              isAvailable: size.isAvailable,
+              stock: size.isAvailable ? size.stock : 0,
+            },
+          });
+        })
+      );
+
+      await tx.productSize.deleteMany({
+        where: {
           productId: id,
-          sizeLabel: s.sizeLabel,
-          isAvailable: s.isAvailable,
-          stock: s.isAvailable ? 1 : 0,
-        })),
+          sizeLabel: {
+            notIn: Array.from(incomingLabels),
+          },
+        },
       });
     });
 
@@ -126,6 +164,9 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("products.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.product.update({
       where: { id },
@@ -140,6 +181,9 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
 }
 
 export async function deleteAllProducts(): Promise<ActionResult> {
+  const session = await getAdminActionSession("products.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.orderStatusHistory.deleteMany();
@@ -159,6 +203,9 @@ export async function deleteAllProducts(): Promise<ActionResult> {
 }
 
 export async function toggleFeatured(id: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("products.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product) return { error: "Producto no encontrado." };

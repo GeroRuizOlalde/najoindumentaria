@@ -4,12 +4,14 @@ import { getActiveBrands } from "@/lib/queries/brands";
 import { getActiveCategories } from "@/lib/queries/categories";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductForm } from "@/components/admin/product-form";
+import { requireAdminPermission } from "@/lib/admin-permissions";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditProductPage({ params }: Props) {
+  await requireAdminPermission("products.manage");
   const { id } = await params;
   const [product, brands, categories] = await Promise.all([
     getProductById(id),
@@ -49,6 +51,7 @@ export default async function EditProductPage({ params }: Props) {
           sizes: product.sizes.map((s) => ({
             sizeLabel: s.sizeLabel,
             isAvailable: s.isAvailable,
+            stock: s.stock,
           })),
         }}
       />

@@ -14,15 +14,18 @@ export async function getOrders(filters: OrderFilters = {}) {
 
   const where = {
     ...(status && { status }),
-    ...(archived
-      ? { archivedAt: { not: null } }
-      : { archivedAt: null }),
+    ...(archived ? { archivedAt: { not: null } } : { archivedAt: null }),
     ...(search && {
       OR: [
         { orderCode: { contains: search, mode: "insensitive" as const } },
         {
           customer: {
             name: { contains: search, mode: "insensitive" as const },
+          },
+        },
+        {
+          customer: {
+            email: { contains: search, mode: "insensitive" as const },
           },
         },
       ],
@@ -37,6 +40,7 @@ export async function getOrders(filters: OrderFilters = {}) {
       take: limit,
       include: {
         customer: { select: { name: true, email: true, phone: true } },
+        coupon: { select: { code: true, description: true } },
         product: {
           select: {
             name: true,
@@ -60,7 +64,12 @@ export async function getOrders(filters: OrderFilters = {}) {
     prisma.order.count({ where }),
   ]);
 
-  return { orders, total, totalPages: Math.ceil(total / limit), currentPage: page };
+  return {
+    orders,
+    total,
+    totalPages: Math.ceil(total / limit),
+    currentPage: page,
+  };
 }
 
 export async function getOrderById(id: string) {
@@ -68,6 +77,7 @@ export async function getOrderById(id: string) {
     where: { id },
     include: {
       customer: true,
+      coupon: true,
       product: {
         include: {
           brand: { select: { name: true } },
@@ -95,6 +105,7 @@ export async function getOrderByCode(code: string) {
   return prisma.order.findUnique({
     where: { orderCode: code },
     include: {
+      coupon: true,
       product: {
         select: {
           name: true,

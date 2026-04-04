@@ -53,6 +53,16 @@ export async function getCustomerById(id: string) {
               brand: { select: { name: true } },
             },
           },
+          items: {
+            include: {
+              product: {
+                select: {
+                  name: true,
+                  brand: { select: { name: true } },
+                },
+              },
+            },
+          },
         },
       },
     },

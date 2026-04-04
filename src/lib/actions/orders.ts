@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { VALID_STATUS_TRANSITIONS, type OrderStatusType } from "@/lib/constants";
 import type { OrderStatus } from "@/generated/prisma/client";
 import { sendStatusUpdateEmail } from "@/lib/email/send-status-update-email";
+import { getAdminActionSession } from "@/lib/admin-permissions";
 
 export type ActionResult = {
   success?: boolean;
@@ -17,10 +18,22 @@ export async function updateOrderStatus(
   note?: string,
   changedBy?: string
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("orders.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { customer: { select: { name: true, email: true } } },
+      include: {
+        customer: { select: { name: true, email: true } },
+        items: {
+          select: {
+            productId: true,
+            sizeLabel: true,
+            quantity: true,
+          },
+        },
+      },
     });
     if (!order) return { error: "Pedido no encontrado." };
 
@@ -51,19 +64,39 @@ export async function updateOrderStatus(
           fromStatus: order.status,
           toStatus: newStatus,
           note,
-          changedBy: changedBy || "admin",
+          changedBy: changedBy || session.user.id,
         },
       });
 
       // Restore stock if cancelled or expired
-      if ((newStatus === "CANCELLED" || newStatus === "EXPIRED") && order.productId && order.sizeLabel) {
-        await tx.productSize.updateMany({
-          where: {
-            productId: order.productId,
-            sizeLabel: order.sizeLabel,
-          },
-          data: { stock: { increment: 1 }, isAvailable: true },
-        });
+      if (newStatus === "CANCELLED" || newStatus === "EXPIRED") {
+        const itemsToRestore =
+          order.items.length > 0
+            ? order.items
+            : order.productId && order.sizeLabel
+              ? [
+                  {
+                    productId: order.productId,
+                    sizeLabel: order.sizeLabel,
+                    quantity: 1,
+                  },
+                ]
+              : [];
+
+        await Promise.all(
+          itemsToRestore.map((item) =>
+            tx.productSize.updateMany({
+              where: {
+                productId: item.productId,
+                sizeLabel: item.sizeLabel,
+              },
+              data: {
+                stock: { increment: item.quantity },
+                isAvailable: true,
+              },
+            })
+          )
+        );
       }
     });
 
@@ -90,6 +123,9 @@ export async function updateOrderStatus(
 }
 
 export async function archiveOrder(orderId: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("orders.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.order.update({
       where: { id: orderId },
@@ -103,6 +139,9 @@ export async function archiveOrder(orderId: string): Promise<ActionResult> {
 }
 
 export async function unarchiveOrder(orderId: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("orders.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.order.update({
       where: { id: orderId },
@@ -120,8 +159,13 @@ export async function updateOrderDetails(
   data: {
     trackingNumber?: string | null;
     adminNotes?: string | null;
+    paymentProof?: string | null;
+    shippingAddress?: string | null;
   }
 ): Promise<ActionResult> {
+  const session = await getAdminActionSession("orders.manage");
+  if (!session) return { error: "No autorizado." };
+
   try {
     await prisma.order.update({
       where: { id: orderId },

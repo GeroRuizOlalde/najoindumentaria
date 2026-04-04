@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
+import { getAppBaseUrl } from "@/lib/app-config";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,7 +16,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://najoindumentaria.vercel.app/"),
+  metadataBase: new URL(getAppBaseUrl()),
   title: {
     default: "NAJO Indumentaria | Streetwear Premium",
     template: "%s | NAJO Indumentaria",

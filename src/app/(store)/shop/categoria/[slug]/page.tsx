@@ -33,7 +33,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const page = parseInt(sp.page || "1");
 
   const [result, categories, brands] = await Promise.all([
-    getProducts({ page, status: "ACTIVE", categorySlug: slug, sort: sp.sort }),
+    getProducts({
+      page,
+      status: "ACTIVE",
+      categorySlug: slug,
+      sort: sp.sort,
+      availableSizesOnly: true,
+    }),
     getActiveCategories(),
     getActiveBrands(),
   ]);

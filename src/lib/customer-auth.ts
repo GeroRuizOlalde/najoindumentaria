@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 const COOKIE_NAME = "customer_session";
 const SECRET = new TextEncoder().encode(
-  process.env.CUSTOMER_JWT_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret-change-me"
+  process.env.CUSTOMER_JWT_SECRET ||
+    process.env.AUTH_SECRET ||
+    "fallback-secret-change-me"
 );
 
 interface CustomerSession {
