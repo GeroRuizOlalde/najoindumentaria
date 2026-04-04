@@ -29,13 +29,51 @@ import { requireAdminPermission } from "@/lib/admin-permissions";
 export default async function DashboardPage() {
   await requireAdminPermission("dashboard.view");
 
-  const [stats, recentOrders, alerts, sellingProducts, insights] = await Promise.all([
-    getDashboardStats(),
-    getRecentOrders(),
-    getAlerts(),
-    getBestWorstSellingProducts(),
-    getCommercialInsights(),
-  ]);
+  let stats;
+  let recentOrders;
+  let alerts;
+  let sellingProducts;
+  let insights;
+
+  try {
+    [stats, recentOrders, alerts, sellingProducts, insights] = await Promise.all([
+      getDashboardStats(),
+      getRecentOrders(),
+      getAlerts(),
+      getBestWorstSellingProducts(),
+      getCommercialInsights(),
+    ]);
+  } catch (error) {
+    console.error("Dashboard render error:", error);
+
+    return (
+      <>
+        <PageHeader title="Dashboard" description="Resumen de tu tienda" />
+        <div className="border border-warning/30 bg-warning/5 p-6">
+          <div className="mb-3 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-warning" />
+            <h2 className="font-heading text-lg font-semibold">
+              No se pudo cargar el dashboard
+            </h2>
+          </div>
+          <p className="text-sm text-gray-text">
+            El motivo mas probable es que la base de datos no tenga aplicado el
+            esquema nuevo del proyecto.
+          </p>
+          <p className="mt-3 text-sm text-gray-text">
+            Ejecuta sobre la misma base usada por la app:
+          </p>
+          <pre className="mt-3 overflow-x-auto bg-black p-4 text-xs text-white">
+            <code>npx prisma db push</code>
+          </pre>
+          <p className="mt-3 text-sm text-gray-text">
+            Si estas en Vercel, corre ese comando con la `DATABASE_URL` de
+            producción y luego redeploy.
+          </p>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
