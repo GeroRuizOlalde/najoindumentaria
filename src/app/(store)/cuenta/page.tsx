@@ -11,7 +11,7 @@ import { ProductCard } from "@/components/store/product-card";
 
 export default async function AccountPage() {
   const customer = await getCustomerFromSession();
-  if (!customer) redirect("/login-cliente");
+  if (!customer) redirect("/login");
 
   const [orders, wishlistItems, reviews] = await Promise.all([
     prisma.order.findMany({

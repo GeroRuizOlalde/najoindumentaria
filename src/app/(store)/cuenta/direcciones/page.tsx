@@ -7,7 +7,7 @@ import { ChevronLeft } from "lucide-react";
 
 export default async function AddressesPage() {
   const customer = await getCustomerFromSession();
-  if (!customer) redirect("/login-cliente");
+  if (!customer) redirect("/login");
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">

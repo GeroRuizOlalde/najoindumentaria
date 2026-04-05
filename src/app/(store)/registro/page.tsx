@@ -18,7 +18,7 @@ export default async function RegisterPage() {
         <RegisterForm />
         <p className="text-xs text-gray-text text-center mt-6">
           ¿Ya tenés cuenta?{" "}
-          <a href="/login-cliente" className="text-black underline">
+          <a href="/login" className="text-black underline">
             Iniciá sesión
           </a>
         </p>

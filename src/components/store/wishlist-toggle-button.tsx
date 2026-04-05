@@ -34,7 +34,7 @@ export function WishlistToggleButton({
       loading={isPending}
       onClick={() => {
         if (!isLoggedIn) {
-          router.push("/login-cliente");
+          router.push("/login");
           return;
         }
 

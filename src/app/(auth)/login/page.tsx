@@ -35,7 +35,7 @@ export default function LoginPage() {
             autoComplete="email"
             required
             className="w-full rounded-none border border-gray-text/30 bg-transparent px-4 py-3 text-sm text-white placeholder:text-gray-text/50 focus:border-white focus:outline-none transition-colors"
-            placeholder="admin@najoindumentaria.com"
+            placeholder="tu@email.com"
           />
         </div>
 
@@ -58,7 +58,7 @@ export default function LoginPage() {
         </div>
 
         {state.error && (
-          <p className="text-sm text-error">{state.error}</p>
+          <p className="text-sm text-red-400">{state.error}</p>
         )}
 
         <button
@@ -69,6 +69,13 @@ export default function LoginPage() {
           {isPending ? "Ingresando..." : "Ingresar"}
         </button>
       </form>
+
+      <p className="text-xs text-gray-text text-center mt-6">
+        ¿No tenés cuenta?{" "}
+        <a href="/registro" className="text-white underline">
+          Registrate
+        </a>
+      </p>
     </div>
   );
 }

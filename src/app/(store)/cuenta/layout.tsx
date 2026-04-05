@@ -7,7 +7,7 @@ export default async function AccountLayout({
   children: React.ReactNode;
 }) {
   const customer = await getCustomerFromSession();
-  if (!customer) redirect("/login-cliente");
+  if (!customer) redirect("/login");
 
   return <>{children}</>;
 }

@@ -149,7 +149,7 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
           {/* Right actions */}
           <div className="flex items-center gap-1">
             <Link
-              href={isLoggedIn ? "/cuenta" : "/login-cliente"}
+              href={isLoggedIn ? "/cuenta" : "/login"}
               className="p-2 text-gray-text hover:text-black transition-colors"
               aria-label={isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}
             >

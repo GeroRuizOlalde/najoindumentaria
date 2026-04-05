@@ -247,7 +247,7 @@ export default async function ProductPage({ params }: Props) {
                     Inicia sesion para guardar favoritos y dejar una reseña.
                   </p>
                   <Link
-                    href="/login-cliente"
+                    href="/login"
                     className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
                   >
                     Iniciar sesion

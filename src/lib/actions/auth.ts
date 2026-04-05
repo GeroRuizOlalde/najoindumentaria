@@ -3,6 +3,9 @@
 import { redirect } from "next/navigation";
 import { signIn } from "@/lib/auth";
 import { AuthError } from "next-auth";
+import { compare } from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { createCustomerSession } from "@/lib/customer-auth";
 
 export type LoginState = {
   error?: string;
@@ -19,23 +22,38 @@ export async function loginAction(
     return { error: "Email y contraseña son obligatorios." };
   }
 
-  console.log("[loginAction] intentando login para:", email);
+  // Verificar si es admin
+  const adminUser = await prisma.user.findUnique({ where: { email } });
 
-  try {
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      if (error.type === "CredentialsSignin") {
+  if (adminUser) {
+    if (!adminUser.active) {
+      return { error: "Tu cuenta está desactivada." };
+    }
+
+    try {
+      await signIn("credentials", { email, password, redirect: false });
+    } catch (error) {
+      if (error instanceof AuthError) {
         return { error: "Email o contraseña incorrectos." };
       }
-      return { error: "Error al iniciar sesión." };
+      throw error;
     }
-    throw error;
+
+    redirect("/admin");
   }
 
-  redirect("/admin");
+  // Verificar si es cliente
+  const customer = await prisma.customer.findUnique({ where: { email } });
+
+  if (!customer || !customer.password) {
+    return { error: "Email o contraseña incorrectos." };
+  }
+
+  const valid = await compare(password, customer.password);
+  if (!valid) {
+    return { error: "Email o contraseña incorrectos." };
+  }
+
+  await createCustomerSession(customer.id);
+  redirect("/cuenta");
 }
