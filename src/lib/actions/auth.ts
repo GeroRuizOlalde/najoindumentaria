@@ -19,6 +19,8 @@ export async function loginAction(
     return { error: "Email y contraseña son obligatorios." };
   }
 
+  console.log("[loginAction] intentando login para:", email);
+
   try {
     await signIn("credentials", {
       email,
