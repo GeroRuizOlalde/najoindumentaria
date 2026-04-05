@@ -176,8 +176,8 @@ export default async function CouponsPage({ searchParams }: Props) {
                           active: "Desactivar",
                           inactive: "Activar",
                         }}
-                        onToggle={() => toggleCouponActive(coupon.id)}
-                        onDelete={() => deleteCoupon(coupon.id)}
+                        onToggle={toggleCouponActive.bind(null, coupon.id)}
+                        onDelete={deleteCoupon.bind(null, coupon.id)}
                       />
                     </TableCell>
                   </TableRow>

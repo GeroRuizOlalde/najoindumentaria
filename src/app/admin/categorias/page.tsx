@@ -119,8 +119,8 @@ export default async function CategoriesPage({ searchParams }: Props) {
                           active: "Desactivar",
                           inactive: "Activar",
                         }}
-                        onToggle={() => toggleCategoryActive(category.id)}
-                        onDelete={() => deleteCategory(category.id)}
+                        onToggle={toggleCategoryActive.bind(null, category.id)}
+                        onDelete={deleteCategory.bind(null, category.id)}
                       />
                     </TableCell>
                   </TableRow>

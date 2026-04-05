@@ -115,8 +115,8 @@ export default async function BrandsPage({ searchParams }: Props) {
                           active: "Desactivar",
                           inactive: "Activar",
                         }}
-                        onToggle={() => toggleBrandActive(brand.id)}
-                        onDelete={() => deleteBrand(brand.id)}
+                        onToggle={toggleBrandActive.bind(null, brand.id)}
+                        onDelete={deleteBrand.bind(null, brand.id)}
                       />
                     </TableCell>
                   </TableRow>
