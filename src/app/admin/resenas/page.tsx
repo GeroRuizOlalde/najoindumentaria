@@ -49,14 +49,9 @@ export default async function ReviewsPage({ searchParams }: Props) {
     status,
   });
 
-  const buildUrl = (page: number) => {
-    const qs = new URLSearchParams();
-    if (params.search) qs.set("search", params.search);
-    if (params.status) qs.set("status", params.status);
-    if (page > 1) qs.set("page", String(page));
-    const query = qs.toString();
-    return query ? `/admin/resenas?${query}` : "/admin/resenas";
-  };
+  const paginationParams: Record<string, string> = {};
+  if (params.search) paginationParams.search = params.search;
+  if (params.status) paginationParams.status = params.status;
 
   return (
     <>
@@ -173,7 +168,8 @@ export default async function ReviewsPage({ searchParams }: Props) {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              buildUrl={buildUrl}
+              basePath="/admin/resenas"
+              searchParams={paginationParams}
             />
           </div>
         </>

@@ -52,15 +52,10 @@ export default async function OrdersPage({ searchParams }: Props) {
     { value: "ARCHIVED", label: "Archivados" },
   ];
 
-  const buildUrl = (page: number) => {
-    const qs = new URLSearchParams();
-    if (params.status) qs.set("status", params.status);
-    if (params.search) qs.set("search", params.search);
-    if (params.archived) qs.set("archived", params.archived);
-    if (page > 1) qs.set("page", String(page));
-    const query = qs.toString();
-    return query ? `/admin/pedidos?${query}` : "/admin/pedidos";
-  };
+  const paginationParams: Record<string, string> = {};
+  if (params.status) paginationParams.status = params.status;
+  if (params.search) paginationParams.search = params.search;
+  if (params.archived) paginationParams.archived = params.archived;
 
   return (
     <>
@@ -202,7 +197,8 @@ export default async function OrdersPage({ searchParams }: Props) {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              buildUrl={buildUrl}
+              basePath="/admin/pedidos"
+              searchParams={paginationParams}
             />
           </div>
         </>

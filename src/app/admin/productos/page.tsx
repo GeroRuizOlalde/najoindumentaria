@@ -43,14 +43,9 @@ export default async function ProductsPage({ searchParams }: Props) {
     search: params.search,
   });
 
-  const buildUrl = (page: number) => {
-    const qs = new URLSearchParams();
-    if (params.status) qs.set("status", params.status);
-    if (params.search) qs.set("search", params.search);
-    if (page > 1) qs.set("page", String(page));
-    const query = qs.toString();
-    return query ? `/admin/productos?${query}` : "/admin/productos";
-  };
+  const paginationParams: Record<string, string> = {};
+  if (params.status) paginationParams.status = params.status;
+  if (params.search) paginationParams.search = params.search;
 
   return (
     <>
@@ -178,7 +173,8 @@ export default async function ProductsPage({ searchParams }: Props) {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              buildUrl={buildUrl}
+              basePath="/admin/productos"
+              searchParams={paginationParams}
             />
           </div>
         </>

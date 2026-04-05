@@ -8,7 +8,8 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange?: (page: number) => void;
-  buildUrl?: (page: number) => string;
+  basePath?: string;
+  searchParams?: Record<string, string>;
   className?: string;
 }
 
@@ -16,10 +17,19 @@ export function Pagination({
   currentPage,
   totalPages,
   onPageChange,
-  buildUrl,
+  basePath,
+  searchParams = {},
   className,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
+
+  function buildUrl(page: number) {
+    const qs = new URLSearchParams(searchParams);
+    if (page > 1) qs.set("page", String(page));
+    else qs.delete("page");
+    const query = qs.toString();
+    return query ? `${basePath}?${query}` : basePath!;
+  }
 
   const pages: (number | "...")[] = [];
   if (totalPages <= 7) {
@@ -48,7 +58,7 @@ export function Pagination({
       active ? "bg-black text-white" : "text-gray-text hover:text-black"
     );
 
-    if (buildUrl) {
+    if (basePath) {
       return (
         <Link href={buildUrl(page)} className={cls}>
           {page}
@@ -74,7 +84,7 @@ export function Pagination({
     const cls =
       "inline-flex h-9 w-9 items-center justify-center text-gray-text transition-colors hover:text-black disabled:opacity-30";
 
-    if (buildUrl && !disabled) {
+    if (basePath && !disabled) {
       return (
         <Link href={buildUrl(page)} className={cls}>
           {children}
@@ -84,7 +94,7 @@ export function Pagination({
     return (
       <button
         type="button"
-        onClick={() => onPageChange?.(page)}
+        onClick={() => !disabled ? onPageChange?.(page) : undefined}
         disabled={disabled}
         className={cls}
       >

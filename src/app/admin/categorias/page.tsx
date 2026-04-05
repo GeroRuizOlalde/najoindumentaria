@@ -40,13 +40,8 @@ export default async function CategoriesPage({ searchParams }: Props) {
     search: params.search,
   });
 
-  const buildUrl = (page: number) => {
-    const qs = new URLSearchParams();
-    if (params.search) qs.set("search", params.search);
-    if (page > 1) qs.set("page", String(page));
-    const query = qs.toString();
-    return query ? `/admin/categorias?${query}` : "/admin/categorias";
-  };
+  const paginationParams: Record<string, string> = {};
+  if (params.search) paginationParams.search = params.search;
 
   return (
     <>
@@ -138,7 +133,8 @@ export default async function CategoriesPage({ searchParams }: Props) {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              buildUrl={buildUrl}
+              basePath="/admin/categorias"
+              searchParams={paginationParams}
             />
           </div>
         </>

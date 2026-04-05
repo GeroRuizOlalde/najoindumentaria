@@ -46,14 +46,9 @@ export default async function CouponsPage({ searchParams }: Props) {
     active: activeFilter,
   });
 
-  const buildUrl = (page: number) => {
-    const qs = new URLSearchParams();
-    if (params.search) qs.set("search", params.search);
-    if (params.active) qs.set("active", params.active);
-    if (page > 1) qs.set("page", String(page));
-    const query = qs.toString();
-    return query ? `/admin/cupones?${query}` : "/admin/cupones";
-  };
+  const paginationParams: Record<string, string> = {};
+  if (params.search) paginationParams.search = params.search;
+  if (params.active) paginationParams.active = params.active;
 
   return (
     <>
@@ -195,7 +190,8 @@ export default async function CouponsPage({ searchParams }: Props) {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              buildUrl={buildUrl}
+              basePath="/admin/cupones"
+              searchParams={paginationParams}
             />
           </div>
         </>
