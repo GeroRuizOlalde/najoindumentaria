@@ -25,7 +25,7 @@ export async function loginAction(
     redirectTo: "/admin",
   });
 
-  const resultUrl = new URL(result, "http://localhost:3000");
+  const resultUrl = new URL(result, process.env.AUTH_URL ?? "http://localhost:3000");
   const authError = resultUrl.searchParams.get("error");
 
   if (authError === "CredentialsSignin") {
