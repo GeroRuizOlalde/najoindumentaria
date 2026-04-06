@@ -12,29 +12,42 @@ export async function GET(request: Request) {
   const since = searchParams.get("since");
 
   if (!since) {
-    return NextResponse.json({ orders: [], timestamp: new Date().toISOString() });
+    const pendingReviews = await prisma.review.count({
+      where: { status: "PENDING" },
+    });
+    return NextResponse.json({
+      orders: [],
+      pendingReviews,
+      timestamp: new Date().toISOString(),
+    });
   }
 
-  const orders = await prisma.order.findMany({
-    where: { createdAt: { gt: new Date(since) } },
-    orderBy: { createdAt: "desc" },
-    take: 10,
-    select: {
-      id: true,
-      orderCode: true,
-      amount: true,
-      createdAt: true,
-      customer: { select: { name: true } },
-      product: { select: { name: true } },
-      items: {
-        select: { product: { select: { name: true } } },
-        take: 1,
+  const [orders, pendingReviews] = await Promise.all([
+    prisma.order.findMany({
+      where: { createdAt: { gt: new Date(since) } },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        orderCode: true,
+        amount: true,
+        createdAt: true,
+        customer: { select: { name: true } },
+        product: { select: { name: true } },
+        items: {
+          select: { product: { select: { name: true } } },
+          take: 1,
+        },
       },
-    },
-  });
+    }),
+    prisma.review.count({
+      where: { status: "PENDING" },
+    }),
+  ]);
 
   return NextResponse.json({
     orders,
+    pendingReviews,
     timestamp: new Date().toISOString(),
   });
 }

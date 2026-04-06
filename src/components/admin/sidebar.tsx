@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { useNotifications } from "./notification-context";
 
 const navItems = [
   {
@@ -96,6 +97,7 @@ interface SidebarProps {
 export function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { newOrders, pendingReviews } = useNotifications();
 
   const visibleNavItems = navItems.filter((item) =>
     hasAdminPermission(userRole as never, item.permission)
@@ -127,7 +129,17 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
               )}
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/admin/pedidos" && newOrders > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                  {newOrders > 99 ? "99+" : newOrders}
+                </span>
+              )}
+              {item.href === "/admin/resenas" && pendingReviews > 0 && (
+                <span className="bg-amber-500 text-white text-xs font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                  {pendingReviews > 99 ? "99+" : pendingReviews}
+                </span>
+              )}
             </Link>
           );
         })}

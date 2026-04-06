@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/admin/sidebar";
 import { NotificationListener } from "@/components/admin/notification-listener";
+import { NotificationProvider } from "@/components/admin/notification-context";
 import { requireAdminPermission } from "@/lib/admin-permissions";
 
 export default async function AdminLayout({
@@ -10,17 +11,19 @@ export default async function AdminLayout({
   const session = await requireAdminPermission("dashboard.view");
 
   return (
-    <div className="min-h-screen bg-off-white">
-      <Sidebar
-        userName={session.user.name || "Admin"}
-        userRole={session.user.role || "ADMIN"}
-      />
-      <main className="lg:pl-60">
-        <div className="px-6 py-8 lg:px-10 lg:py-10 max-w-7xl">
-          {children}
-        </div>
-      </main>
-      <NotificationListener />
-    </div>
+    <NotificationProvider>
+      <div className="min-h-screen bg-off-white">
+        <Sidebar
+          userName={session.user.name || "Admin"}
+          userRole={session.user.role || "ADMIN"}
+        />
+        <main className="lg:pl-60">
+          <div className="px-6 py-8 lg:px-10 lg:py-10 max-w-7xl">
+            {children}
+          </div>
+        </main>
+        <NotificationListener />
+      </div>
+    </NotificationProvider>
   );
 }

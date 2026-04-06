@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Toaster, toast } from "sonner";
 import { formatPriceFromDecimal } from "@/lib/utils";
+import { useNotifications } from "./notification-context";
 
 const POLL_INTERVAL = 30_000; // 30 seconds
 
@@ -18,6 +19,7 @@ interface NotificationOrder {
 export function NotificationListener() {
   const lastCheckedRef = useRef(new Date().toISOString());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { incrementNewOrders, setPendingReviews } = useNotifications();
 
   const playSound = useCallback(() => {
     try {
@@ -26,13 +28,22 @@ export function NotificationListener() {
         audioRef.current.volume = 0.7;
       }
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {
-        // Browser may block autoplay until user interaction
-      });
-    } catch {
-      // Audio not available
-    }
+      audioRef.current.play().catch(() => {});
+    } catch {}
   }, []);
+
+  useEffect(() => {
+    // Carga inicial: obtener conteos sin `since`
+    fetch(`/api/admin/notifications?since=${encodeURIComponent(lastCheckedRef.current)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.pendingReviews === "number") {
+          setPendingReviews(data.pendingReviews);
+        }
+        if (data.timestamp) lastCheckedRef.current = data.timestamp;
+      })
+      .catch(() => {});
+  }, [setPendingReviews]);
 
   useEffect(() => {
     const checkForNewOrders = async () => {
@@ -46,6 +57,7 @@ export function NotificationListener() {
 
         if (data.orders && data.orders.length > 0) {
           playSound();
+          incrementNewOrders(data.orders.length);
 
           data.orders.forEach((order: NotificationOrder) => {
             toast.success(`Nuevo pedido ${order.orderCode}`, {
@@ -61,18 +73,19 @@ export function NotificationListener() {
           });
         }
 
+        if (typeof data.pendingReviews === "number") {
+          setPendingReviews(data.pendingReviews);
+        }
+
         if (data.timestamp) {
           lastCheckedRef.current = data.timestamp;
         }
-      } catch {
-        // Silently fail — will retry on next interval
-      }
+      } catch {}
     };
 
     const interval = setInterval(checkForNewOrders, POLL_INTERVAL);
-
     return () => clearInterval(interval);
-  }, [playSound]);
+  }, [playSound, incrementNewOrders, setPendingReviews]);
 
   return (
     <Toaster
