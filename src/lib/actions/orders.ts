@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { VALID_STATUS_TRANSITIONS, type OrderStatusType } from "@/lib/constants";
 import type { OrderStatus } from "@/generated/prisma/client";
-import { sendStatusUpdateEmail } from "@/lib/email/send-status-update-email";
 import { getAdminActionSession } from "@/lib/admin-permissions";
 
 export type ActionResult = {
@@ -99,20 +98,6 @@ export async function updateOrderStatus(
         );
       }
     });
-
-    // Send status update email (non-blocking)
-    try {
-      await sendStatusUpdateEmail({
-        customerName: order.customer.name,
-        customerEmail: order.customer.email,
-        orderCode: order.orderCode,
-        newStatus: newStatus as OrderStatusType,
-        note,
-        trackingNumber: order.trackingNumber ?? undefined,
-      });
-    } catch (emailError) {
-      console.error("Error al enviar email de actualización:", emailError);
-    }
 
     revalidatePath("/admin/pedidos");
     revalidatePath(`/admin/pedidos/${orderId}`);

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { signIn } from "@/lib/auth";
+import { signIn, signOut } from "@/lib/auth";
 import { AuthError } from "next-auth";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
@@ -56,4 +56,9 @@ export async function loginAction(
 
   await createCustomerSession(customer.id);
   redirect("/cuenta");
+}
+
+export async function logoutAdminAction() {
+  await signOut({ redirect: false });
+  redirect("/login");
 }

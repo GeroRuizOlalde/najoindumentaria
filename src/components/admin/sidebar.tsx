@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNotifications } from "./notification-context";
+import { logoutAdminAction } from "@/lib/actions/auth";
 
 const navItems = [
   {
@@ -148,7 +149,7 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
       <div className="border-t border-white/10 px-6 py-4">
         <div className="text-sm text-white/80">{userName}</div>
         <div className="text-xs text-white/40">{userRole}</div>
-        <form action="/api/auth/signout" method="POST" className="mt-3">
+        <form action={logoutAdminAction} className="mt-3">
           <button
             type="submit"
             className="flex items-center gap-2 text-xs text-white/40 hover:text-white transition-colors"
