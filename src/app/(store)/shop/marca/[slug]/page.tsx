@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { getProducts } from "@/lib/queries/products";
 import { getBrandBySlug } from "@/lib/queries/brands";
 import { getActiveCategories } from "@/lib/queries/categories";
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!brand) return {};
   return {
     title: brand.name,
-    description: `Comprá ${brand.name} en Najo Indumentaria. Productos originales con garantía.`,
+    description: brand.description || `Comprá ${brand.name} en Najo Indumentaria. Productos originales con garantía.`,
   };
 }
 
@@ -49,10 +50,45 @@ export default async function BrandPage({ params, searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
-      <PageHeader
-        title={brand.name}
-        description={`${result.total} producto${result.total !== 1 ? "s" : ""}`}
-      />
+      {brand.banner && (
+        <div className="relative w-full h-48 md:h-64 mb-8 rounded-lg overflow-hidden">
+          <Image
+            src={brand.banner}
+            alt={brand.name}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <div className="flex items-center gap-4">
+              {brand.logo && (
+                <div className="relative w-20 h-20 bg-white rounded-full p-2">
+                  <Image
+                    src={brand.logo}
+                    alt={brand.name}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              )}
+              <h1 className="font-heading text-3xl md:text-4xl font-bold text-white">
+                {brand.name}
+              </h1>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!brand.banner && (
+        <PageHeader
+          title={brand.name}
+          description={brand.description || `${result.total} producto${result.total !== 1 ? "s" : ""}`}
+        />
+      )}
+
+      {brand.banner && brand.description && (
+        <p className="mt-2 mb-8 text-gray-text">{brand.description}</p>
+      )}
 
       <CatalogFilters categories={categories} brands={brands} />
 
