@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CheckCircle2, Copy } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import { formatPriceFromDecimal } from "@/lib/utils";
 
 interface ReservationSuccessProps {
   orderCode: string;
@@ -12,12 +13,20 @@ interface ReservationSuccessProps {
     instructions?: string;
   };
   whatsappNumber?: string;
+  subtotalAmount?: number;
+  discountAmount?: number;
+  totalAmount?: number;
+  couponCode?: string;
 }
 
 export function ReservationSuccess({
   orderCode,
   bankDetails,
   whatsappNumber,
+  subtotalAmount,
+  discountAmount,
+  totalAmount,
+  couponCode,
 }: ReservationSuccessProps) {
   const whatsappMessage = encodeURIComponent(
     `Hola! Acabo de hacer una reserva en Najo Indumentaria. Mi código de pedido es: ${orderCode}`
@@ -35,6 +44,35 @@ export function ReservationSuccess({
       <div className="mt-3 inline-flex items-center gap-2 bg-off-white px-6 py-3 font-mono text-xl font-bold tracking-wider">
         {orderCode}
       </div>
+
+      {totalAmount !== undefined && (
+        <div className="mt-6 border border-border p-4 text-left text-sm space-y-2">
+          {subtotalAmount !== undefined && discountAmount !== undefined && discountAmount > 0 && (
+            <>
+              <div className="flex justify-between text-gray-text">
+                <span>Subtotal</span>
+                <span>{formatPriceFromDecimal(subtotalAmount)}</span>
+              </div>
+              <div className="flex justify-between text-success">
+                <span>
+                  Descuento{couponCode ? ` (${couponCode})` : ""}
+                </span>
+                <span>-{formatPriceFromDecimal(discountAmount)}</span>
+              </div>
+              <div className="border-t border-border pt-2 flex justify-between font-semibold text-base">
+                <span>Total a transferir</span>
+                <span>{formatPriceFromDecimal(totalAmount)}</span>
+              </div>
+            </>
+          )}
+          {(discountAmount === undefined || discountAmount === 0) && (
+            <div className="flex justify-between font-semibold text-base">
+              <span>Total a transferir</span>
+              <span>{formatPriceFromDecimal(totalAmount)}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bank details */}
       <div className="mt-8 border border-border p-6 text-left">

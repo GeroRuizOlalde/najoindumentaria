@@ -39,6 +39,10 @@ export type CartReservationResult = {
   errors?: Record<string, string>;
   orderCode?: string;
   orderId?: string;
+  subtotalAmount?: number;
+  discountAmount?: number;
+  totalAmount?: number;
+  couponCode?: string;
 };
 
 export async function createCartReservation(
@@ -280,7 +284,15 @@ export async function createCartReservation(
       console.error("Error al enviar email de reserva:", emailError);
     }
 
-    return { success: true, orderCode: order.orderCode, orderId: order.id };
+    return {
+      success: true,
+      orderCode: order.orderCode,
+      orderId: order.id,
+      subtotalAmount,
+      discountAmount: appliedCoupon?.discountAmount ?? 0,
+      totalAmount,
+      couponCode: appliedCoupon?.code,
+    };
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("STOCK_EXHAUSTED:")) {
       const productName = err.message.split(":")[1];

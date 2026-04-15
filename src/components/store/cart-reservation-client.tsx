@@ -70,6 +70,10 @@ export function CartReservationClient({
         orderCode={state.orderCode}
         bankDetails={bankDetails}
         whatsappNumber={whatsappNumber}
+        subtotalAmount={state.subtotalAmount}
+        discountAmount={state.discountAmount}
+        totalAmount={state.totalAmount}
+        couponCode={state.couponCode}
       />
     );
   }
