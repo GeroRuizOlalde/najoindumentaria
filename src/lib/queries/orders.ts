@@ -133,10 +133,6 @@ export async function getOrderByCode(code: string) {
         orderBy: { createdAt: "asc" },
         select: { toStatus: true, createdAt: true, note: true },
       },
-      subtotalAmount: true,
-      discountAmount: true,
-      amount: true,
-      couponCode: true,
     },
   });
 }
