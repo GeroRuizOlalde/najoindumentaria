@@ -125,7 +125,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
   }
 
   function addCustomSize() {
-    const label = prompt("IngresÃ¡ el talle:");
+    const label = prompt("Ingresá el talle:");
     if (label && !sizes.find((size) => size.sizeLabel === label)) {
       setSizes([...sizes, { sizeLabel: label, isAvailable: true, stock: 1 }]);
     }
@@ -147,7 +147,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
 
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold">
-          InformaciÃ³n bÃ¡sica
+          Información básica
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
@@ -175,7 +175,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             id="brandId"
             name="brandId"
             label="Marca"
-            placeholder="SeleccionÃ¡ una marca"
+            placeholder="Seleccioná una marca"
             defaultValue={product?.brandId}
             options={brands.map((brand) => ({
               value: brand.id,
@@ -186,8 +186,8 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
           <Select
             id="categoryId"
             name="categoryId"
-            label="CategorÃ­a"
-            placeholder="SeleccionÃ¡ una categorÃ­a"
+            label="Categoría"
+            placeholder="Seleccioná una categoría"
             defaultValue={product?.categoryId}
             options={categories.map((category) => ({
               value: category.id,
@@ -218,25 +218,25 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-heading text-lg font-semibold">DescripciÃ³n</h2>
+        <h2 className="font-heading text-lg font-semibold">Descripción</h2>
         <Input
           id="shortDescription"
           name="shortDescription"
-          label="DescripciÃ³n corta (max 300 caracteres)"
+          label="Descripción corta (max 300 caracteres)"
           defaultValue={product?.shortDescription ?? ""}
           maxLength={300}
         />
         <Textarea
           id="description"
           name="description"
-          label="DescripciÃ³n completa"
+          label="Descripción completa"
           defaultValue={product?.description ?? ""}
           required
         />
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-heading text-lg font-semibold">ImÃ¡genes</h2>
+        <h2 className="font-heading text-lg font-semibold">Imágenes</h2>
         <div className="flex gap-2 flex-wrap">
           <CldUploadWidget
             uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
@@ -272,7 +272,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
               label=""
               value={newImageUrl}
               onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="O pegÃ¡ una URL..."
+              placeholder="O pegá una URL..."
               className="flex-1"
             />
             <Button
@@ -449,14 +449,14 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         <Input
           id="metaTitle"
           name="metaTitle"
-          label="Meta tÃ­tulo (max 70)"
+          label="Meta título (max 70)"
           defaultValue={product?.metaTitle ?? ""}
           maxLength={70}
         />
         <Input
           id="metaDescription"
           name="metaDescription"
-          label="Meta descripciÃ³n (max 160)"
+          label="Meta descripción (max 160)"
           defaultValue={product?.metaDescription ?? ""}
           maxLength={160}
         />

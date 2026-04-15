@@ -17,10 +17,10 @@ const cartItemSchema = z.object({
 });
 
 const cartReservationSchema = z.object({
-  items: z.array(cartItemSchema).min(1, "El carrito estÃ¡ vacÃ­o"),
+  items: z.array(cartItemSchema).min(1, "El carrito está vacío"),
   name: z.string().min(2, "Nombre requerido"),
-  email: z.string().email("Email invÃ¡lido"),
-  phone: z.string().min(8, "TelÃ©fono requerido"),
+  email: z.string().email("Email inválido"),
+  phone: z.string().min(8, "Teléfono requerido"),
   province: z.string().min(1, "Provincia requerida"),
   city: z.string().min(1, "Ciudad requerida"),
   address: z.string().optional().nullable(),
@@ -29,7 +29,7 @@ const cartReservationSchema = z.object({
   customerNotes: z.string().optional().nullable(),
   couponCode: z.string().optional().nullable(),
   acceptPolicies: z.literal(true, {
-    error: "DebÃ©s aceptar las polÃ­ticas",
+    error: "Debés aceptar las políticas",
   }),
 });
 
@@ -55,7 +55,7 @@ export async function createCartReservation(
       typeof cartItemSchema
     >[];
   } catch {
-    return { error: "Datos del carrito invÃ¡lidos." };
+    return { error: "Datos del carrito inválidos." };
   }
 
   const raw = {
@@ -274,7 +274,7 @@ export async function createCartReservation(
         productName:
           data.items.length === 1
             ? firstSize.product.name
-            : `${firstSize.product.name} y ${data.items.length - 1} mÃ¡s`,
+            : `${firstSize.product.name} y ${data.items.length - 1} más`,
         brandName: firstSize.product.brand.name,
         sizeLabel: data.items.length === 1 ? firstItem.sizeLabel : "Varios",
         price: totalAmount,
@@ -300,6 +300,6 @@ export async function createCartReservation(
     }
 
     console.error("Error creating cart reservation:", err);
-    return { error: "Error al crear la reserva. IntentÃ¡ de nuevo." };
+    return { error: "Error al crear la reserva. Intentá de nuevo." };
   }
 }
