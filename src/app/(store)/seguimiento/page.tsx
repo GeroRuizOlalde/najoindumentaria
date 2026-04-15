@@ -130,17 +130,17 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   Subtotal
                 </p>
                 <p className="mt-2 font-medium">
-                  {formatPriceFromDecimal(order.subtotalAmount)}
+                  {formatPriceFromDecimal(Number(order.subtotalAmount ?? 0))}
                 </p>
               </div>
 
-              {order.discountAmount > 0 && (
+              {Number(order.discountAmount ?? 0) > 0 && (
                 <div className="rounded border border-border bg-white p-4">
                   <p className="text-xs uppercase tracking-wider text-gray-text">
                     Descuento
                   </p>
                   <p className="mt-2 font-medium text-success">
-                    -{formatPriceFromDecimal(order.discountAmount)}
+                    -{formatPriceFromDecimal(Number(order.discountAmount ?? 0))}
                   </p>
                 </div>
               )}
@@ -150,7 +150,7 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   Total
                 </p>
                 <p className="mt-2 font-medium">
-                  {formatPriceFromDecimal(order.amount)}
+                  {formatPriceFromDecimal(Number(order.amount ?? 0))}
                 </p>
                 {order.couponCode && (
                   <p className="text-xs text-gray-text mt-2">
