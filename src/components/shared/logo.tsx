@@ -16,7 +16,7 @@ export function Logo({ className, variant = "dark", href = "/" }: LogoProps) {
           variant === "dark" ? "text-black" : "text-white"
         )}
       >
-        NAJO
+        NAJO.
       </span>
     </div>
   );
