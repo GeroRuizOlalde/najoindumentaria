@@ -108,6 +108,8 @@ export async function getOrderByCode(code: string) {
       coupon: true,
       product: {
         select: {
+          id: true,
+          slug: true,
           name: true,
           images: true,
           brand: { select: { name: true } },
@@ -117,6 +119,8 @@ export async function getOrderByCode(code: string) {
         include: {
           product: {
             select: {
+              id: true,
+              slug: true,
               name: true,
               images: true,
               brand: { select: { name: true } },
@@ -128,6 +132,10 @@ export async function getOrderByCode(code: string) {
         orderBy: { createdAt: "asc" },
         select: { toStatus: true, createdAt: true, note: true },
       },
+      subtotalAmount: true,
+      discountAmount: true,
+      amount: true,
+      couponCode: true,
     },
   });
 }
