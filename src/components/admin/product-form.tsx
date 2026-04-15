@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { slugify } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
 import {
   createProduct,
   updateProduct,
@@ -65,6 +65,8 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
     "shoe"
   );
   const [featured, setFeatured] = useState(product?.featured ?? false);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragIndex = useRef<number | null>(null);
 
   const action = product ? updateProduct.bind(null, product.id) : createProduct;
 
@@ -286,13 +288,38 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {images.map((url, index) => (
-              <div key={url} className="relative group border border-border p-1">
+              <div
+                key={url}
+                draggable
+                onDragStart={() => { dragIndex.current = index; }}
+                onDragEnter={() => setDragOverIndex(index)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => {
+                  if (dragIndex.current === null || dragIndex.current === index) {
+                    setDragOverIndex(null);
+                    return;
+                  }
+                  const next = [...images];
+                  const [moved] = next.splice(dragIndex.current, 1);
+                  next.splice(index, 0, moved);
+                  setImages(next);
+                  dragIndex.current = null;
+                  setDragOverIndex(null);
+                }}
+                onDragEnd={() => { dragIndex.current = null; setDragOverIndex(null); }}
+                className={cn(
+                  "relative group border p-1 cursor-grab active:cursor-grabbing transition-opacity",
+                  dragOverIndex === index && dragIndex.current !== index
+                    ? "border-black opacity-60"
+                    : "border-border"
+                )}
+              >
                 <div className="h-20 w-20 bg-off-white flex items-center justify-center text-xs text-gray-text overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={url}
                     alt={`Imagen ${index + 1}`}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover pointer-events-none"
                   />
                 </div>
                 <button

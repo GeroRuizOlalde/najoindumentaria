@@ -13,13 +13,19 @@ export function SizeSelector({
   selectedSizeId,
   onSelect,
 }: SizeSelectorProps) {
+  const sortedSizes = [...sizes].sort((a, b) => {
+    const aOut = !a.isAvailable || a.stock === 0;
+    const bOut = !b.isAvailable || b.stock === 0;
+    return Number(aOut) - Number(bOut);
+  });
+
   return (
     <div>
       <p className="text-xs uppercase tracking-wider text-gray-text mb-3">
         Talle
       </p>
       <div className="flex flex-wrap gap-2">
-        {sizes.map((size) => {
+        {sortedSizes.map((size) => {
           const outOfStock = !size.isAvailable || size.stock === 0;
           return (
             <button
