@@ -18,7 +18,7 @@ export default async function AdminLayout({
           userRole={session.user.role || "ADMIN"}
         />
         <main className="lg:pl-60">
-          <div className="px-6 py-8 lg:px-10 lg:py-10 max-w-7xl">
+          <div className="px-6 pt-16 pb-8 lg:px-10 lg:py-10 max-w-7xl">
             {children}
           </div>
         </main>
