@@ -1,5 +1,37 @@
 import { prisma } from "@/lib/prisma";
-import type { OrderStatus } from "@/generated/prisma/client";
+import type { OrderStatus, Prisma } from "@/generated/prisma/client";
+
+type OrderTrackingPayload = Prisma.OrderGetPayload<{
+  include: {
+    coupon: true;
+    product: {
+      select: {
+        id: true;
+        slug: true;
+        name: true;
+        images: true;
+        brand: { select: { name: true } };
+      };
+    };
+    items: {
+      include: {
+        product: {
+          select: {
+            id: true;
+            slug: true;
+            name: true;
+            images: true;
+            brand: { select: { name: true } };
+          };
+        };
+      };
+    };
+    statusHistory: {
+      orderBy: { createdAt: "asc" };
+      select: { toStatus: true; createdAt: true; note: true };
+    };
+  };
+}>;
 
 interface OrderFilters {
   status?: OrderStatus;
@@ -101,7 +133,7 @@ export async function getOrderById(id: string) {
   });
 }
 
-export async function getOrderByCode(code: string) {
+export async function getOrderByCode(code: string): Promise<OrderTrackingPayload | null> {
   return prisma.order.findUnique({
     where: { orderCode: code },
     include: {
