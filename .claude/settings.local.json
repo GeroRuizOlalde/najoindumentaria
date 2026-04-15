@@ -38,7 +38,9 @@
       "Bash(npx tsc:*)",
       "Bash(npx tsx -e \":*)",
       "Bash(npx tsx:*)",
-      "Bash(taskkill /F /IM node.exe)"
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(find /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx -o -name .env* -o -name *.json -o -name schema.prisma \\\\\\))",
+      "Bash(find /c/Users/geror.GERO/OneDrive/Documentos/GitHub/najoindumentaria/src/app -type f \\\\\\(-path *login* -o -path *auth* \\\\\\) -name *.tsx -o -name *.ts)"
     ]
   }
 }

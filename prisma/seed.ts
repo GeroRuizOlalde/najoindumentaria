@@ -11,7 +11,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Seeding database...");
 
-  // ─── Admin User ────────────────────────────────────────
+  // ─── Admin Users ────────────────────────────────────────
   const admin = await prisma.user.upsert({
     where: { email: "admin@najoindumentaria.com" },
     update: {},
@@ -23,6 +23,18 @@ async function main() {
     },
   });
   console.log(`  Admin user: ${admin.email}`);
+
+  const superAdmin2 = await prisma.user.upsert({
+    where: { email: "studiosnajo@gmail.com" },
+    update: {},
+    create: {
+      name: "Studios Najo",
+      email: "studiosnajo@gmail.com",
+      password: hashSync("Najo2026", 12),
+      role: "SUPER_ADMIN",
+    },
+  });
+  console.log(`  Admin user: ${superAdmin2.email}`);
 
   // ─── Brands ────────────────────────────────────────────
   const brandsData = [
