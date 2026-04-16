@@ -58,7 +58,7 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
               link.href === "/shop" ? (
                 <div
                   key={link.href}
-                  className="relative"
+                  className="relative flex items-center"
                   onMouseEnter={() => setShopOpen(true)}
                   onMouseLeave={() => setShopOpen(false)}
                 >
