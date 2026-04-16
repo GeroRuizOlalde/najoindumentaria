@@ -24,6 +24,7 @@ interface ReservationConfirmationProps {
   bankAccountType?: string;
   bankInstructions?: string;
   expiresAt: string;
+  trackingUrl?: string;
   whatsappNumber?: string;
 }
 
@@ -41,6 +42,7 @@ export default function ReservationConfirmation({
   bankAccountType,
   bankInstructions,
   expiresAt,
+  trackingUrl,
   whatsappNumber,
 }: ReservationConfirmationProps) {
   return (
@@ -100,6 +102,14 @@ export default function ReservationConfirmation({
             Una vez realizada la transferencia, envianos el comprobante por
             WhatsApp indicando tu código de pedido.
           </Text>
+
+          {trackingUrl && (
+            <Section style={{ textAlign: "center" as const, marginTop: "16px" }}>
+              <Link href={trackingUrl} style={secondaryButton}>
+                Ver seguimiento seguro
+              </Link>
+            </Section>
+          )}
 
           {whatsappNumber && (
             <Section style={{ textAlign: "center" as const, marginTop: "24px" }}>
@@ -195,6 +205,18 @@ const button = {
   textTransform: "uppercase" as const,
   letterSpacing: "0.1em",
   textDecoration: "none",
+};
+
+const secondaryButton = {
+  backgroundColor: "#111111",
+  color: "#FFFFFF",
+  padding: "12px 24px",
+  fontSize: "12px",
+  fontWeight: 600 as const,
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.1em",
+  textDecoration: "none",
+  display: "inline-block",
 };
 
 const footer = {

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { getAdminActionSession } from "@/lib/admin-permissions";
 import type { ReviewStatus } from "@/generated/prisma/client";
+import { customerHasDeliveredProduct } from "@/lib/customer-orders";
 
 const submitReviewSchema = z.object({
   productId: z.string().min(1),
@@ -40,6 +41,17 @@ export async function submitProductReview(
   }
 
   try {
+    const canReview = await customerHasDeliveredProduct(
+      session.customerId,
+      parsed.data.productId
+    );
+
+    if (!canReview) {
+      return {
+        error: "Solo puedes reseñar productos que hayas comprado y recibido.",
+      };
+    }
+
     await prisma.review.upsert({
       where: {
         productId_customerId: {

@@ -25,6 +25,7 @@ export async function updateOrderStatus(
       where: { id: orderId },
       include: {
         customer: { select: { name: true, email: true } },
+        coupon: { select: { id: true } },
         items: {
           select: {
             productId: true,
@@ -69,6 +70,18 @@ export async function updateOrderStatus(
 
       // Restore stock if cancelled or expired
       if (newStatus === "CANCELLED" || newStatus === "EXPIRED") {
+        if (order.coupon?.id) {
+          await tx.coupon.updateMany({
+            where: {
+              id: order.coupon.id,
+              usedCount: { gt: 0 },
+            },
+            data: {
+              usedCount: { decrement: 1 },
+            },
+          });
+        }
+
         const itemsToRestore =
           order.items.length > 0
             ? order.items

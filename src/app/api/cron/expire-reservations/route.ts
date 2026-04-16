@@ -20,6 +20,7 @@ export async function GET(request: Request) {
     },
     select: {
       id: true,
+      couponId: true,
       productId: true,
       sizeLabel: true,
       items: {
@@ -52,6 +53,18 @@ export async function GET(request: Request) {
           changedBy: "system",
         },
       });
+
+      if (order.couponId) {
+        await tx.coupon.updateMany({
+          where: {
+            id: order.couponId,
+            usedCount: { gt: 0 },
+          },
+          data: {
+            usedCount: { decrement: 1 },
+          },
+        });
+      }
 
       // Restore stock
       const itemsToRestore =

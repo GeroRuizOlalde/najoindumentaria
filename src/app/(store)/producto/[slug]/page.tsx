@@ -9,6 +9,7 @@ import { Accordion, AccordionItem } from "@/components/ui/accordion";
 import { ReviewForm } from "@/components/store/review-form";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { prisma } from "@/lib/prisma";
+import { customerHasDeliveredProduct } from "@/lib/customer-orders";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -38,7 +39,7 @@ export default async function ProductPage({ params }: Props) {
 
   const customerSession = await getCustomerSession();
 
-  const [related, wishlistItem, ownReview] = await Promise.all([
+  const [related, wishlistItem, ownReview, canReview] = await Promise.all([
     getRelatedProducts(product.id, product.categoryId, 4),
     customerSession
       ? prisma.wishlistItem.findUnique({
@@ -60,6 +61,9 @@ export default async function ProductPage({ params }: Props) {
           },
         })
       : null,
+    customerSession
+      ? customerHasDeliveredProduct(customerSession.customerId, product.id)
+      : false,
   ]);
 
   const reviewCount = product.reviews.length;
@@ -226,7 +230,7 @@ export default async function ProductPage({ params }: Props) {
               Comparte tu experiencia con otros clientes.
             </p>
             <div className="mt-5">
-              {customerSession ? (
+              {customerSession && canReview ? (
                 <ReviewForm
                   productId={product.id}
                   productSlug={product.slug}
@@ -241,6 +245,11 @@ export default async function ProductPage({ params }: Props) {
                       : null
                   }
                 />
+              ) : customerSession ? (
+                <p className="text-sm text-gray-text">
+                  Podras dejar una resena cuando este producto figure como
+                  entregado en uno de tus pedidos.
+                </p>
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-text">

@@ -4,6 +4,7 @@ import { formatPriceFromDecimal } from "@/lib/utils";
 
 interface ReservationSuccessProps {
   orderCode: string;
+  trackingToken?: string;
   bankDetails: {
     bankName?: string;
     holder?: string;
@@ -21,6 +22,7 @@ interface ReservationSuccessProps {
 
 export function ReservationSuccess({
   orderCode,
+  trackingToken,
   bankDetails,
   whatsappNumber,
   subtotalAmount,
@@ -142,7 +144,11 @@ export function ReservationSuccess({
           </a>
         )}
         <Link
-          href={`/seguimiento?codigo=${orderCode}`}
+          href={
+            trackingToken
+              ? `/seguimiento?codigo=${encodeURIComponent(orderCode)}&token=${encodeURIComponent(trackingToken)}`
+              : `/seguimiento?codigo=${encodeURIComponent(orderCode)}`
+          }
           className="inline-flex h-11 items-center justify-center border border-border px-6 text-xs font-medium uppercase tracking-wider hover:border-black transition-colors"
         >
           Seguir mi pedido

@@ -6,6 +6,11 @@ import { generateOrderCode } from "@/lib/utils";
 import { RESERVATION_EXPIRY_HOURS } from "@/lib/constants";
 import { sendReservationEmail } from "@/lib/email/send-reservation-email";
 import { validateCoupon } from "@/lib/coupons";
+import { getCustomerSession } from "@/lib/customer-auth";
+import {
+  createOrderTrackingToken,
+  normalizeEmail,
+} from "@/lib/order-tracking";
 
 export type ReservationResult = {
   success?: boolean;
@@ -13,6 +18,7 @@ export type ReservationResult = {
   errors?: Record<string, string>;
   orderCode?: string;
   orderId?: string;
+  trackingToken?: string;
 };
 
 export async function createReservation(
@@ -47,6 +53,8 @@ export async function createReservation(
   }
 
   const data = parsed.data;
+  const normalizedEmail = normalizeEmail(data.email);
+  const customerSession = await getCustomerSession();
 
   try {
     // Find product and size
@@ -127,24 +135,53 @@ export async function createReservation(
       }
 
       // Find or create customer
-      const customer = await tx.customer.upsert({
-        where: { email: data.email },
-        update: {
-          name: data.name,
-          phone: data.phone,
-          province: data.province,
-          city: data.city,
-          preferredContact: data.preferredContact,
-        },
-        create: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          province: data.province,
-          city: data.city,
-          preferredContact: data.preferredContact,
-        },
-      });
+      let customer;
+
+      if (customerSession?.customerId) {
+        customer = await tx.customer.findUnique({
+          where: { id: customerSession.customerId },
+        });
+
+        if (!customer) {
+          throw new Error("CUSTOMER_SESSION_NOT_FOUND");
+        }
+
+        if (normalizeEmail(customer.email) !== normalizedEmail) {
+          throw new Error("CUSTOMER_EMAIL_MISMATCH");
+        }
+
+        customer = await tx.customer.update({
+          where: { id: customer.id },
+          data: {
+            name: data.name,
+            phone: data.phone,
+            province: data.province,
+            city: data.city,
+            preferredContact: data.preferredContact,
+          },
+        });
+      } else {
+        const existingCustomer = await tx.customer.findUnique({
+          where: { email: normalizedEmail },
+        });
+
+        if (existingCustomer?.password) {
+          throw new Error("CUSTOMER_LOGIN_REQUIRED");
+        }
+
+        customer =
+          existingCustomer ||
+          (await tx.customer.create({
+            data: {
+              name: data.name,
+              email: normalizedEmail,
+              phone: data.phone,
+              province: data.province,
+              city: data.city,
+              preferredContact: data.preferredContact,
+            },
+          }));
+      }
 
       // Create order
       const newOrder = await tx.order.create({
@@ -190,6 +227,11 @@ export async function createReservation(
       return newOrder;
     });
 
+    const trackingToken = await createOrderTrackingToken({
+      orderId: order.id,
+      email: normalizedEmail,
+    });
+
     // Send confirmation email (non-blocking)
     try {
       await sendReservationEmail({
@@ -201,13 +243,29 @@ export async function createReservation(
         sizeLabel: size.sizeLabel,
         price: finalAmount,
         expiresAt,
+        trackingToken,
       });
     } catch (emailError) {
       console.error("Error al enviar email de reserva:", emailError);
     }
 
-    return { success: true, orderCode: order.orderCode, orderId: order.id };
+    return {
+      success: true,
+      orderCode: order.orderCode,
+      orderId: order.id,
+      trackingToken,
+    };
   } catch (err) {
+    if (err instanceof Error && err.message === "CUSTOMER_LOGIN_REQUIRED") {
+      return {
+        error: "Ese email ya tiene una cuenta. Inicia sesion para continuar.",
+      };
+    }
+    if (err instanceof Error && err.message === "CUSTOMER_EMAIL_MISMATCH") {
+      return {
+        error: "El email debe coincidir con el de tu cuenta iniciada.",
+      };
+    }
     if (err instanceof Error && err.message === "STOCK_EXHAUSTED") {
       return { error: "Lo sentimos, este talle se acaba de agotar." };
     }

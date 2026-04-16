@@ -8,34 +8,54 @@ import { TrackingSearch } from "@/components/store/tracking-search";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { prisma } from "@/lib/prisma";
 import { formatDateAR, formatPriceFromDecimal } from "@/lib/utils";
+import {
+  normalizeEmail,
+  verifyOrderTrackingToken,
+} from "@/lib/order-tracking";
 
 export const metadata: Metadata = {
   title: "Seguimiento de pedido",
-  description: "Consultá el estado de tu pedido en Najo Indumentaria.",
+  description: "ConsultÃ¡ el estado de tu pedido en Najo Indumentaria.",
 };
 
 interface Props {
-  searchParams: Promise<{ codigo?: string }>;
+  searchParams: Promise<{ codigo?: string; email?: string; token?: string }>;
 }
 
 export default async function SeguimientoPage({ searchParams }: Props) {
   const params = await searchParams;
   const code = params.codigo?.trim().toUpperCase();
+  const email = params.email?.trim().toLowerCase();
+  const token = params.token?.trim();
 
   const [order, customerSession] = await Promise.all([
     code ? getOrderByCode(code) : null,
     getCustomerSession(),
   ]);
 
+  const trackingAccess = token ? await verifyOrderTrackingToken(token) : null;
+
+  const hasTrackingAccess =
+    !!order &&
+    ((customerSession && order.customer.id === customerSession.customerId) ||
+      (trackingAccess &&
+        trackingAccess.orderId === order.id &&
+        trackingAccess.email === normalizeEmail(order.customer.email)) ||
+      (email && normalizeEmail(order.customer.email) === normalizeEmail(email)));
+
+  const visibleOrder = hasTrackingAccess ? order : null;
+
   const orderProducts =
-    order?.product
-      ? [{
-          id: order.product.id,
-          slug: order.product.slug,
-          name: order.product.name,
-          brandName: order.product.brand.name,
-        }]
-      : order?.items?.map((item) => ({
+    visibleOrder?.product
+      ? [
+          {
+            id: visibleOrder.product.id,
+            slug: visibleOrder.product.slug,
+            name: visibleOrder.product.name,
+            brandName: visibleOrder.product.brand.name,
+          },
+        ]
+      : visibleOrder?.items?.map((item) => ({
           id: item.product.id,
           slug: item.product.slug,
           name: item.product.name,
@@ -47,7 +67,10 @@ export default async function SeguimientoPage({ searchParams }: Props) {
   );
 
   const existingReviews =
-    customerSession && uniqueProducts.length > 0
+    customerSession &&
+    visibleOrder &&
+    visibleOrder.customer.id === customerSession.customerId &&
+    uniqueProducts.length > 0
       ? await prisma.review.findMany({
           where: {
             customerId: customerSession.customerId,
@@ -67,38 +90,44 @@ export default async function SeguimientoPage({ searchParams }: Props) {
           Seguimiento
         </h1>
         <p className="mt-3 text-gray-text">
-          Ingresá tu código de pedido para ver el estado.
+          IngresÃ¡ tu cÃ³digo y el email de la compra para ver el estado.
         </p>
       </div>
 
-      <TrackingSearch initialCode={code} />
+      <TrackingSearch
+        initialCode={code}
+        initialEmail={email}
+        requireEmail={!token && !(customerSession && visibleOrder)}
+      />
 
-      {code && !order && (
+      {code && !visibleOrder && (
         <div className="mt-8 bg-error/5 border border-error/20 p-4 text-center">
           <p className="text-sm text-error">
-            No encontramos un pedido con el código &quot;{code}&quot;.
+            No pudimos encontrar un pedido con esos datos.
           </p>
           <p className="text-xs text-gray-text mt-1">
-            Revisá que el código esté bien escrito. Ejemplo: NAJO-A1B2C3
+            RevisÃ¡ el cÃ³digo y el email usados en la reserva.
           </p>
         </div>
       )}
 
-      {order && (
+      {visibleOrder && (
         <div className="mt-8 space-y-6">
           <div className="border border-border p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-xs text-gray-text">Pedido</p>
-                <p className="font-mono text-lg font-bold">{order.orderCode}</p>
+                <p className="font-mono text-lg font-bold">
+                  {visibleOrder.orderCode}
+                </p>
               </div>
-              <StatusBadge status={order.status as OrderStatusType} />
+              <StatusBadge status={visibleOrder.status as OrderStatusType} />
             </div>
 
             <div className="bg-off-white p-4 mb-6">
-              {order.items.length > 0 ? (
+              {visibleOrder.items.length > 0 ? (
                 <div className="space-y-1">
-                  {order.items.map((item, i) => (
+                  {visibleOrder.items.map((item, i) => (
                     <div key={i}>
                       <p className="font-medium text-sm">
                         {item.product.brand.name} {item.product.name}
@@ -110,13 +139,13 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                     </div>
                   ))}
                 </div>
-              ) : order.product ? (
+              ) : visibleOrder.product ? (
                 <>
                   <p className="font-medium text-sm">
-                    {order.product.brand.name} {order.product.name}
+                    {visibleOrder.product.brand.name} {visibleOrder.product.name}
                   </p>
                   <p className="text-xs text-gray-text mt-0.5">
-                    Talle {order.sizeLabel}
+                    Talle {visibleOrder.sizeLabel}
                   </p>
                 </>
               ) : (
@@ -130,17 +159,22 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   Subtotal
                 </p>
                 <p className="mt-2 font-medium">
-                  {formatPriceFromDecimal(Number(order.subtotalAmount ?? 0))}
+                  {formatPriceFromDecimal(
+                    Number(visibleOrder.subtotalAmount ?? 0)
+                  )}
                 </p>
               </div>
 
-              {Number(order.discountAmount ?? 0) > 0 && (
+              {Number(visibleOrder.discountAmount ?? 0) > 0 && (
                 <div className="rounded border border-border bg-white p-4">
                   <p className="text-xs uppercase tracking-wider text-gray-text">
                     Descuento
                   </p>
                   <p className="mt-2 font-medium text-success">
-                    -{formatPriceFromDecimal(Number(order.discountAmount ?? 0))}
+                    -
+                    {formatPriceFromDecimal(
+                      Number(visibleOrder.discountAmount ?? 0)
+                    )}
                   </p>
                 </div>
               )}
@@ -150,26 +184,26 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   Total
                 </p>
                 <p className="mt-2 font-medium">
-                  {formatPriceFromDecimal(Number(order.amount ?? 0))}
+                  {formatPriceFromDecimal(Number(visibleOrder.amount ?? 0))}
                 </p>
-                {order.couponCode && (
+                {visibleOrder.couponCode && (
                   <p className="text-xs text-gray-text mt-2">
-                    Cupón aplicado: <span className="font-medium">{order.couponCode}</span>
+                    CupÃ³n aplicado:{" "}
+                    <span className="font-medium">{visibleOrder.couponCode}</span>
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Timeline */}
             <div className="space-y-4">
               <p className="text-xs font-medium uppercase tracking-wider text-gray-text">
                 Historial
               </p>
-              {order.statusHistory.map((entry, i) => (
+              {visibleOrder.statusHistory.map((entry, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="flex flex-col items-center">
                     <div className="h-2.5 w-2.5 rounded-full bg-black" />
-                    {i < order.statusHistory.length - 1 && (
+                    {i < visibleOrder.statusHistory.length - 1 && (
                       <div className="w-px flex-1 bg-border mt-1" />
                     )}
                   </div>
@@ -193,23 +227,29 @@ export default async function SeguimientoPage({ searchParams }: Props) {
 
           <div className="border border-border p-6 bg-white">
             <h2 className="font-heading text-2xl font-bold tracking-tight mb-4">
-              Reseñas
+              ReseÃ±as
             </h2>
-            {order.status === "DELIVERED" ? (
+            {visibleOrder.status === "DELIVERED" ? (
               <>
                 <p className="text-sm text-gray-text mb-6">
-                  Podes dejar una reseña de los productos de este pedido.
+                  Podes dejar una reseÃ±a de los productos de este pedido.
                 </p>
                 {uniqueProducts.length > 0 ? (
                   <div className="space-y-6">
                     {uniqueProducts.map((product) => {
                       const existingReview = reviewsByProductId.get(product.id);
                       return (
-                        <div key={product.id} className="rounded border border-border p-4">
+                        <div
+                          key={product.id}
+                          className="rounded border border-border p-4"
+                        >
                           <div className="mb-4">
-                            <p className="text-sm font-medium">{product.brandName} {product.name}</p>
+                            <p className="text-sm font-medium">
+                              {product.brandName} {product.name}
+                            </p>
                           </div>
-                          {customerSession ? (
+                          {customerSession &&
+                          visibleOrder.customer.id === customerSession.customerId ? (
                             <ReviewForm
                               productId={product.id}
                               productSlug={product.slug}
@@ -227,13 +267,14 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                           ) : (
                             <div className="space-y-3">
                               <p className="text-sm text-gray-text">
-                                Inicia sesión para dejar tu reseña.
+                                Inicia sesiÃ³n con la cuenta dueÃ±a del pedido
+                                para dejar tu reseÃ±a.
                               </p>
                               <Link
                                 href="/login"
                                 className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
                               >
-                                Iniciar sesión
+                                Iniciar sesiÃ³n
                               </Link>
                             </div>
                           )}
@@ -243,13 +284,14 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-text">
-                    No hay productos para reseñar en este pedido.
+                    No hay productos para reseÃ±ar en este pedido.
                   </p>
                 )}
               </>
             ) : (
               <p className="text-sm text-gray-text">
-                Las reseñas se pueden dejar una vez que el pedido esté marcado como entregado.
+                Las reseÃ±as se pueden dejar una vez que el pedido estÃ© marcado
+                como entregado.
               </p>
             )}
           </div>

@@ -5,6 +5,7 @@ import { hash, compare } from "bcryptjs";
 import { createCustomerSession, destroyCustomerSession } from "@/lib/customer-auth";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { normalizeEmail } from "@/lib/order-tracking";
 
 export type AuthResult = {
   success?: boolean;
@@ -50,10 +51,11 @@ export async function registerCustomer(
   }
 
   const data = parsed.data;
+  const email = normalizeEmail(data.email);
 
   try {
     const existing = await prisma.customer.findUnique({
-      where: { email: data.email },
+      where: { email },
     });
 
     if (existing?.password) {
@@ -63,14 +65,20 @@ export async function registerCustomer(
     const hashedPassword = await hash(data.password, 12);
 
     const customer = existing
-      ? await prisma.customer.update({
-          where: { email: data.email },
-          data: { password: hashedPassword, name: data.name, phone: data.phone },
+        ? await prisma.customer.update({
+          where: { email },
+          data: {
+            password: hashedPassword,
+            name: data.name,
+            phone: data.phone,
+            province: data.province,
+            city: data.city,
+          },
         })
       : await prisma.customer.create({
           data: {
             name: data.name,
-            email: data.email,
+            email,
             phone: data.phone,
             password: hashedPassword,
             province: data.province,
@@ -106,10 +114,11 @@ export async function loginCustomer(
   }
 
   const data = parsed.data;
+  const email = normalizeEmail(data.email);
 
   try {
     const customer = await prisma.customer.findUnique({
-      where: { email: data.email },
+      where: { email },
     });
 
     if (!customer || !customer.password) {

@@ -3,11 +3,17 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
 const COOKIE_NAME = "customer_session";
-const SECRET = new TextEncoder().encode(
-  process.env.CUSTOMER_JWT_SECRET ||
-    process.env.AUTH_SECRET ||
-    "fallback-secret-change-me"
-);
+function getCustomerSessionSecret() {
+  const secret = process.env.CUSTOMER_JWT_SECRET || process.env.AUTH_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      "Missing CUSTOMER_JWT_SECRET or AUTH_SECRET for customer sessions."
+    );
+  }
+
+  return new TextEncoder().encode(secret);
+}
 
 interface CustomerSession {
   customerId: string;
@@ -17,7 +23,7 @@ export async function createCustomerSession(customerId: string) {
   const token = await new SignJWT({ customerId })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("30d")
-    .sign(SECRET);
+    .sign(getCustomerSessionSecret());
 
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
@@ -35,7 +41,7 @@ export async function getCustomerSession(): Promise<CustomerSession | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getCustomerSessionSecret());
     return { customerId: payload.customerId as string };
   } catch {
     return null;

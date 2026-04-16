@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import type { OrderStatusType } from "@/lib/constants";
 import { LogoutButton } from "@/components/store/logout-button";
 import { ProductCard } from "@/components/store/product-card";
+import { createOrderTrackingToken } from "@/lib/order-tracking";
 
 export default async function AccountPage() {
   const customer = await getCustomerFromSession();
@@ -54,6 +55,20 @@ export default async function AccountPage() {
       },
     }),
   ]);
+
+  const trackingLinks = new Map(
+    await Promise.all(
+      orders.map(async (order): Promise<[string, string]> => [
+        order.id,
+        `/seguimiento?codigo=${encodeURIComponent(order.orderCode)}&token=${encodeURIComponent(
+          await createOrderTrackingToken({
+            orderId: order.id,
+            email: customer.email,
+          })
+        )}`,
+      ])
+    )
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
@@ -177,7 +192,10 @@ export default async function AccountPage() {
           {orders.map((order) => (
             <Link
               key={order.id}
-              href={`/seguimiento?codigo=${order.orderCode}`}
+              href={
+                trackingLinks.get(order.id) ||
+                `/seguimiento?codigo=${encodeURIComponent(order.orderCode)}`
+              }
               className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-off-white/50"
             >
               <div>

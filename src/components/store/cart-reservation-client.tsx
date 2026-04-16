@@ -68,6 +68,7 @@ export function CartReservationClient({
     return (
       <ReservationSuccess
         orderCode={state.orderCode}
+        trackingToken={state.trackingToken}
         bankDetails={bankDetails}
         whatsappNumber={whatsappNumber}
         subtotalAmount={state.subtotalAmount}
@@ -145,6 +146,7 @@ export function CartReservationClient({
               label="Email"
               type="email"
               defaultValue={customer?.email}
+              readOnly={!!customer?.email}
               required
               error={state.errors?.email}
             />

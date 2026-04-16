@@ -61,6 +61,7 @@ export function ReservationClient({
     return (
       <ReservationSuccess
         orderCode={state.orderCode}
+        trackingToken={state.trackingToken}
         bankDetails={bankDetails}
         whatsappNumber={whatsappNumber}
       />
@@ -106,6 +107,7 @@ export function ReservationClient({
               label="Email"
               type="email"
               defaultValue={customer?.email}
+              readOnly={!!customer?.email}
               required
               error={state.errors?.email}
             />

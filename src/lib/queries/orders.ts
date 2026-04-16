@@ -106,6 +106,12 @@ export async function getOrderByCode(code: string) {
   return prisma.order.findUnique({
     where: { orderCode: code },
     include: {
+      customer: {
+        select: {
+          id: true,
+          email: true,
+        },
+      },
       coupon: true,
       product: {
         select: {
