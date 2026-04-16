@@ -18,20 +18,21 @@ export function FormattedPrice({
 
   return (
     <div className={cn("flex items-baseline gap-2", className)}>
-      <span
-        className={cn("font-medium", {
-          "text-sm": size === "sm",
-          "text-base": size === "md",
-          "text-xl": size === "lg",
-        })}
-      >
-        {formatPriceFromDecimal(price)}
-      </span>
       {hasDiscount && (
         <span className="text-sm text-gray-text line-through">
           {formatPriceFromDecimal(compareAtPrice)}
         </span>
       )}
+      <span
+        className={cn("font-medium", {
+          "text-sm": size === "sm",
+          "text-base": size === "md",
+          "text-xl": size === "lg",
+          "text-red-600": hasDiscount,
+        })}
+      >
+        {formatPriceFromDecimal(price)}
+      </span>
     </div>
   );
 }

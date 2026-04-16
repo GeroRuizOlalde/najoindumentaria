@@ -19,10 +19,16 @@ export function ProductCard({ product }: ProductCardProps) {
   const compareAt = product.compareAtPrice
     ? Number(product.compareAtPrice)
     : null;
+  const hasDiscount = compareAt !== null && compareAt > price;
 
   return (
     <Link href={`/producto/${product.slug}`} className="group block">
       <div className="relative aspect-square overflow-hidden bg-off-white">
+        {hasDiscount && (
+          <div className="absolute left-3 top-3 z-10 border border-red-200 bg-white/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-red-600 shadow-sm">
+            Sale
+          </div>
+        )}
         {product.images[0] ? (
           <Image
             src={product.images[0]}
@@ -50,6 +56,11 @@ export function ProductCard({ product }: ProductCardProps) {
           size="sm"
           className="mt-1"
         />
+        {hasDiscount && (
+          <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-red-600">
+            Precio promocional
+          </p>
+        )}
         {product.sizes.length > 0 && (
           <p className="mt-1 text-[10px] text-gray-text">
             {product.sizes.length} talle{product.sizes.length !== 1 && "s"}{" "}

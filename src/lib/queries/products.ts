@@ -13,6 +13,7 @@ interface ProductFilters {
   page?: number;
   limit?: number;
   availableSizesOnly?: boolean;
+  onSaleOnly?: boolean;
 }
 
 export async function getProducts(filters: ProductFilters = {}) {
@@ -28,6 +29,7 @@ export async function getProducts(filters: ProductFilters = {}) {
     page = 1,
     limit = 12,
     availableSizesOnly = false,
+    onSaleOnly = false,
   } = filters;
 
   const where = {
@@ -37,6 +39,15 @@ export async function getProducts(filters: ProductFilters = {}) {
     ...(categorySlug && { category: { slug: categorySlug } }),
     ...(status && { status }),
     ...(featured !== undefined && { featured }),
+    ...(onSaleOnly && { compareAtPrice: { not: null } }),
+    ...(availableSizesOnly && {
+      sizes: {
+        some: {
+          isAvailable: true,
+          stock: { gt: 0 },
+        },
+      },
+    }),
     ...(search && {
       OR: [
         { name: { contains: search, mode: "insensitive" as const } },
@@ -114,7 +125,10 @@ export async function getProductBySlug(slug: string) {
     include: {
       brand: { select: { name: true, slug: true } },
       category: { select: { name: true, slug: true } },
-      sizes: { orderBy: { sizeLabel: "asc" } },
+      sizes: {
+        where: { isAvailable: true, stock: { gt: 0 } },
+        orderBy: { sizeLabel: "asc" },
+      },
       reviews: {
         where: { status: "APPROVED" },
         orderBy: { createdAt: "desc" },
@@ -133,7 +147,13 @@ export async function getProductBySlug(slug: string) {
 
 export async function getFeaturedProducts(limit = 8) {
   return prisma.product.findMany({
-    where: { status: "ACTIVE", featured: true },
+    where: {
+      status: "ACTIVE",
+      featured: true,
+      sizes: {
+        some: { isAvailable: true, stock: { gt: 0 } },
+      },
+    },
     take: limit,
     orderBy: { sortOrder: "asc" },
     include: {
@@ -156,6 +176,9 @@ export async function getRelatedProducts(
       id: { not: productId },
       categoryId,
       status: "ACTIVE",
+      sizes: {
+        some: { isAvailable: true, stock: { gt: 0 } },
+      },
     },
     take: limit,
     orderBy: { createdAt: "desc" },
@@ -171,7 +194,12 @@ export async function getRelatedProducts(
 
 export async function getNewProducts(limit = 8) {
   return prisma.product.findMany({
-    where: { status: "ACTIVE" },
+    where: {
+      status: "ACTIVE",
+      sizes: {
+        some: { isAvailable: true, stock: { gt: 0 } },
+      },
+    },
     take: limit,
     orderBy: { createdAt: "desc" },
     include: {
@@ -181,5 +209,16 @@ export async function getNewProducts(limit = 8) {
         select: { id: true, sizeLabel: true, stock: true },
       },
     },
+  });
+}
+
+export async function getSaleProducts(page = 1, limit = 12) {
+  return getProducts({
+    page,
+    limit,
+    status: "ACTIVE",
+    onSaleOnly: true,
+    availableSizesOnly: true,
+    sort: "newest",
   });
 }

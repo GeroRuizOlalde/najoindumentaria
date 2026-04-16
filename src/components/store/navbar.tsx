@@ -27,7 +27,8 @@ interface NavbarProps {
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
-  { href: "/como-comprar", label: "Cómo comprar" },
+  { href: "/sale", label: "Sale" },
+  { href: "/como-comprar", label: "CÃ³mo comprar" },
   { href: "/nosotros", label: "Nosotros" },
   { href: "/contacto", label: "Contacto" },
 ];
@@ -41,20 +42,17 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
     <>
       <header className="sticky top-0 z-30 border-b border-border bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
-          {/* Mobile hamburger */}
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
             className="p-2 lg:hidden"
-            aria-label="Abrir menú"
+            aria-label="Abrir menÃº"
           >
             <Menu className="h-5 w-5" />
           </button>
 
-          {/* Logo */}
           <Logo href="/" />
 
-          {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-8">
             {NAV_LINKS.map((link) =>
               link.href === "/shop" ? (
@@ -76,14 +74,13 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
                     {link.label}
                   </Link>
 
-                  {/* Mega menu */}
                   {shopOpen && (
                     <div className="absolute left-1/2 top-full -translate-x-1/2 pt-4">
                       <div className="w-[480px] border border-border bg-white p-6 shadow-lg">
                         <div className="grid grid-cols-2 gap-8">
                           <div>
                             <p className="text-xs font-medium uppercase tracking-wider text-gray-text mb-3">
-                              Categorías
+                              CategorÃ­as
                             </p>
                             <ul className="space-y-2">
                               {categories.map((cat) => (
@@ -118,13 +115,20 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
                             </ul>
                           </div>
                         </div>
-                        <div className="mt-6 pt-4 border-t border-border">
+                        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
                           <Link
                             href="/shop"
                             className="text-xs font-medium uppercase tracking-wider hover:text-bronze transition-colors"
                             onClick={() => setShopOpen(false)}
                           >
-                            Ver todo →
+                            Ver todo â†’
+                          </Link>
+                          <Link
+                            href="/sale"
+                            className="text-xs font-medium uppercase tracking-[0.2em] text-red-600 transition-colors hover:text-red-700"
+                            onClick={() => setShopOpen(false)}
+                          >
+                            Ir al sale
                           </Link>
                         </div>
                       </div>
@@ -137,7 +141,8 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
                   href={link.href}
                   className={cn(
                     "text-xs font-medium uppercase tracking-wider transition-colors hover:text-black",
-                    pathname === link.href ? "text-black" : "text-gray-text"
+                    pathname === link.href ? "text-black" : "text-gray-text",
+                    link.href === "/sale" && "text-red-600 hover:text-red-700"
                   )}
                 >
                   {link.label}
@@ -146,12 +151,11 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
             )}
           </nav>
 
-          {/* Right actions */}
           <div className="flex items-center gap-1">
             <Link
               href={isLoggedIn ? "/cuenta" : "/login"}
               className="p-2 text-gray-text hover:text-black transition-colors"
-              aria-label={isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}
+              aria-label={isLoggedIn ? "Mi cuenta" : "Iniciar sesiÃ³n"}
             >
               <User className="h-5 w-5" />
             </Link>

@@ -22,9 +22,8 @@ export function MobileMenu({
   const [shopExpanded, setShopExpanded] = useState(false);
 
   return (
-    <Sheet open={open} onClose={onClose} side="left" title="Menú">
+    <Sheet open={open} onClose={onClose} side="left" title="MenÃº">
       <nav className="space-y-1 -mx-6 -mt-2">
-        {/* Shop with expandable sub-items */}
         <div>
           <button
             type="button"
@@ -42,7 +41,7 @@ export function MobileMenu({
           {shopExpanded && (
             <div className="bg-off-white/50 pb-2">
               <p className="px-8 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wider text-gray-text">
-                Categorías
+                CategorÃ­as
               </p>
               {categories.map((cat) => (
                 <Link
@@ -72,18 +71,32 @@ export function MobileMenu({
                 onClick={onClose}
                 className="block px-8 py-2 text-sm font-medium hover:text-bronze transition-colors"
               >
-                Ver todo →
+                Ver todo â†’
+              </Link>
+              <Link
+                href="/sale"
+                onClick={onClose}
+                className="block px-8 py-2 text-sm font-medium uppercase tracking-[0.18em] text-red-600 hover:text-red-700 transition-colors"
+              >
+                Ir al sale
               </Link>
             </div>
           )}
         </div>
 
         <Link
+          href="/sale"
+          onClick={onClose}
+          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider text-red-600 hover:bg-off-white transition-colors"
+        >
+          Sale
+        </Link>
+        <Link
           href="/como-comprar"
           onClick={onClose}
           className="block px-6 py-3 text-sm font-medium uppercase tracking-wider hover:bg-off-white transition-colors"
         >
-          Cómo comprar
+          CÃ³mo comprar
         </Link>
         <Link
           href="/nosotros"

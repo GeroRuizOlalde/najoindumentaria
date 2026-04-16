@@ -35,7 +35,9 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
 
-  if (!product || product.status !== "ACTIVE") notFound();
+  if (!product || product.status !== "ACTIVE" || product.sizes.length === 0) {
+    notFound();
+  }
 
   const customerSession = await getCustomerSession();
 
