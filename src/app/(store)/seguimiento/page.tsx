@@ -15,7 +15,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Seguimiento de pedido",
-  description: "ConsultÃ¡ el estado de tu pedido en Najo Indumentaria.",
+  description: "Consultá el estado de tu pedido en Najo Indumentaria.",
 };
 
 interface Props {
@@ -85,12 +85,12 @@ export default async function SeguimientoPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 lg:px-8">
-      <div className="text-center mb-10">
+      <div className="mb-10 text-center">
         <h1 className="font-heading text-4xl font-bold tracking-tight">
           Seguimiento
         </h1>
         <p className="mt-3 text-gray-text">
-          IngresÃ¡ tu cÃ³digo y el email de la compra para ver el estado.
+          Ingresá tu código y el email de la compra para ver el estado.
         </p>
       </div>
 
@@ -101,12 +101,12 @@ export default async function SeguimientoPage({ searchParams }: Props) {
       />
 
       {code && !visibleOrder && (
-        <div className="mt-8 bg-error/5 border border-error/20 p-4 text-center">
+        <div className="mt-8 border border-error/20 bg-error/5 p-4 text-center">
           <p className="text-sm text-error">
             No pudimos encontrar un pedido con esos datos.
           </p>
-          <p className="text-xs text-gray-text mt-1">
-            RevisÃ¡ el cÃ³digo y el email usados en la reserva.
+          <p className="mt-1 text-xs text-gray-text">
+            Revisá el código y el email usados en la reserva.
           </p>
         </div>
       )}
@@ -114,7 +114,7 @@ export default async function SeguimientoPage({ searchParams }: Props) {
       {visibleOrder && (
         <div className="mt-8 space-y-6">
           <div className="border border-border p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-text">Pedido</p>
                 <p className="font-mono text-lg font-bold">
@@ -124,12 +124,12 @@ export default async function SeguimientoPage({ searchParams }: Props) {
               <StatusBadge status={visibleOrder.status as OrderStatusType} />
             </div>
 
-            <div className="bg-off-white p-4 mb-6">
+            <div className="mb-6 bg-off-white p-4">
               {visibleOrder.items.length > 0 ? (
                 <div className="space-y-1">
                   {visibleOrder.items.map((item, i) => (
                     <div key={i}>
-                      <p className="font-medium text-sm">
+                      <p className="text-sm font-medium">
                         {item.product.brand.name} {item.product.name}
                       </p>
                       <p className="text-xs text-gray-text">
@@ -141,10 +141,10 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                 </div>
               ) : visibleOrder.product ? (
                 <>
-                  <p className="font-medium text-sm">
+                  <p className="text-sm font-medium">
                     {visibleOrder.product.brand.name} {visibleOrder.product.name}
                   </p>
-                  <p className="text-xs text-gray-text mt-0.5">
+                  <p className="mt-0.5 text-xs text-gray-text">
                     Talle {visibleOrder.sizeLabel}
                   </p>
                 </>
@@ -153,7 +153,7 @@ export default async function SeguimientoPage({ searchParams }: Props) {
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 mb-6">
+            <div className="mb-6 grid gap-3 sm:grid-cols-2">
               <div className="rounded border border-border bg-white p-4">
                 <p className="text-xs uppercase tracking-wider text-gray-text">
                   Subtotal
@@ -187,8 +187,8 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   {formatPriceFromDecimal(Number(visibleOrder.amount ?? 0))}
                 </p>
                 {visibleOrder.couponCode && (
-                  <p className="text-xs text-gray-text mt-2">
-                    CupÃ³n aplicado:{" "}
+                  <p className="mt-2 text-xs text-gray-text">
+                    Cupón aplicado:{" "}
                     <span className="font-medium">{visibleOrder.couponCode}</span>
                   </p>
                 )}
@@ -204,7 +204,7 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   <div className="flex flex-col items-center">
                     <div className="h-2.5 w-2.5 rounded-full bg-black" />
                     {i < visibleOrder.statusHistory.length - 1 && (
-                      <div className="w-px flex-1 bg-border mt-1" />
+                      <div className="mt-1 w-px flex-1 bg-border" />
                     )}
                   </div>
                   <div className="pb-4">
@@ -212,11 +212,11 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                       {ORDER_STATUS_LABELS[entry.toStatus as OrderStatusType]}
                     </p>
                     {entry.note && (
-                      <p className="text-xs text-gray-text mt-0.5">
+                      <p className="mt-0.5 text-xs text-gray-text">
                         {entry.note}
                       </p>
                     )}
-                    <p className="text-xs text-gray-light mt-0.5">
+                    <p className="mt-0.5 text-xs text-gray-light">
                       {formatDateAR(entry.createdAt, "dd/MM/yyyy HH:mm")}
                     </p>
                   </div>
@@ -225,14 +225,14 @@ export default async function SeguimientoPage({ searchParams }: Props) {
             </div>
           </div>
 
-          <div className="border border-border p-6 bg-white">
-            <h2 className="font-heading text-2xl font-bold tracking-tight mb-4">
-              ReseÃ±as
+          <div className="border border-border bg-white p-6">
+            <h2 className="mb-4 font-heading text-2xl font-bold tracking-tight">
+              Reseñas
             </h2>
             {visibleOrder.status === "DELIVERED" ? (
               <>
-                <p className="text-sm text-gray-text mb-6">
-                  Podes dejar una reseÃ±a de los productos de este pedido.
+                <p className="mb-6 text-sm text-gray-text">
+                  Podés dejar una reseña de los productos de este pedido.
                 </p>
                 {uniqueProducts.length > 0 ? (
                   <div className="space-y-6">
@@ -267,14 +267,14 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                           ) : (
                             <div className="space-y-3">
                               <p className="text-sm text-gray-text">
-                                Inicia sesiÃ³n con la cuenta dueÃ±a del pedido
-                                para dejar tu reseÃ±a.
+                                Iniciá sesión con la cuenta dueña del pedido para
+                                dejar tu reseña.
                               </p>
                               <Link
                                 href="/login"
                                 className="inline-flex h-10 items-center justify-center bg-black px-5 text-xs font-medium uppercase tracking-wider text-white transition-opacity hover:opacity-90"
                               >
-                                Iniciar sesiÃ³n
+                                Iniciar sesión
                               </Link>
                             </div>
                           )}
@@ -284,13 +284,13 @@ export default async function SeguimientoPage({ searchParams }: Props) {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-text">
-                    No hay productos para reseÃ±ar en este pedido.
+                    No hay productos para reseñar en este pedido.
                   </p>
                 )}
               </>
             ) : (
               <p className="text-sm text-gray-text">
-                Las reseÃ±as se pueden dejar una vez que el pedido estÃ© marcado
+                Las reseñas se pueden dejar una vez que el pedido esté marcado
                 como entregado.
               </p>
             )}

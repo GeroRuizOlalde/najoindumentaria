@@ -28,7 +28,7 @@ interface NavbarProps {
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
   { href: "/sale", label: "Sale" },
-  { href: "/como-comprar", label: "CÃ³mo comprar" },
+  { href: "/como-comprar", label: "Cómo comprar" },
   { href: "/nosotros", label: "Nosotros" },
   { href: "/contacto", label: "Contacto" },
 ];
@@ -46,7 +46,7 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
             type="button"
             onClick={() => setMobileOpen(true)}
             className="p-2 lg:hidden"
-            aria-label="Abrir menÃº"
+            aria-label="Abrir menú"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -79,15 +79,15 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
                       <div className="w-[480px] border border-border bg-white p-6 shadow-lg">
                         <div className="grid grid-cols-2 gap-8">
                           <div>
-                            <p className="text-xs font-medium uppercase tracking-wider text-gray-text mb-3">
-                              CategorÃ­as
+                            <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-text">
+                              Categorías
                             </p>
                             <ul className="space-y-2">
                               {categories.map((cat) => (
                                 <li key={cat.slug}>
                                   <Link
                                     href={`/shop/categoria/${cat.slug}`}
-                                    className="text-sm hover:text-bronze transition-colors"
+                                    className="text-sm transition-colors hover:text-bronze"
                                     onClick={() => setShopOpen(false)}
                                   >
                                     {cat.name}
@@ -97,7 +97,7 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
                             </ul>
                           </div>
                           <div>
-                            <p className="text-xs font-medium uppercase tracking-wider text-gray-text mb-3">
+                            <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-text">
                               Marcas
                             </p>
                             <ul className="space-y-2">
@@ -105,7 +105,7 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
                                 <li key={brand.slug}>
                                   <Link
                                     href={`/shop/marca/${brand.slug}`}
-                                    className="text-sm hover:text-bronze transition-colors"
+                                    className="text-sm transition-colors hover:text-bronze"
                                     onClick={() => setShopOpen(false)}
                                   >
                                     {brand.name}
@@ -118,10 +118,10 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
                         <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
                           <Link
                             href="/shop"
-                            className="text-xs font-medium uppercase tracking-wider hover:text-bronze transition-colors"
+                            className="text-xs font-medium uppercase tracking-wider transition-colors hover:text-bronze"
                             onClick={() => setShopOpen(false)}
                           >
-                            Ver todo â†’
+                            Ver todo →
                           </Link>
                           <Link
                             href="/sale"
@@ -154,22 +154,22 @@ export function Navbar({ categories, brands, isLoggedIn }: NavbarProps) {
           <div className="flex items-center gap-1">
             <Link
               href={isLoggedIn ? "/cuenta" : "/login"}
-              className="p-2 text-gray-text hover:text-black transition-colors"
-              aria-label={isLoggedIn ? "Mi cuenta" : "Iniciar sesiÃ³n"}
+              className="p-2 text-gray-text transition-colors hover:text-black"
+              aria-label={isLoggedIn ? "Mi cuenta" : "Iniciar sesión"}
             >
               <User className="h-5 w-5" />
             </Link>
             <CartIcon />
             <Link
               href="/shop"
-              className="p-2 text-gray-text hover:text-black transition-colors"
-              aria-label="Buscar en catalogo"
+              className="p-2 text-gray-text transition-colors hover:text-black"
+              aria-label="Buscar en catálogo"
             >
               <Search className="h-5 w-5" />
             </Link>
             <Link
               href="/seguimiento"
-              className="p-2 text-gray-text hover:text-black transition-colors"
+              className="p-2 text-gray-text transition-colors hover:text-black"
               aria-label="Seguimiento de pedido"
             >
               <Package className="h-5 w-5" />

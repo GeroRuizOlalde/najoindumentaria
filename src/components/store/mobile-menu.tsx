@@ -22,13 +22,13 @@ export function MobileMenu({
   const [shopExpanded, setShopExpanded] = useState(false);
 
   return (
-    <Sheet open={open} onClose={onClose} side="left" title="MenÃº">
-      <nav className="space-y-1 -mx-6 -mt-2">
+    <Sheet open={open} onClose={onClose} side="left" title="Menú">
+      <nav className="-mx-6 -mt-2 space-y-1">
         <div>
           <button
             type="button"
             onClick={() => setShopExpanded(!shopExpanded)}
-            className="flex w-full items-center justify-between px-6 py-3 text-sm font-medium uppercase tracking-wider hover:bg-off-white transition-colors"
+            className="flex w-full items-center justify-between px-6 py-3 text-sm font-medium uppercase tracking-wider transition-colors hover:bg-off-white"
           >
             Shop
             <ChevronDown
@@ -40,20 +40,20 @@ export function MobileMenu({
           </button>
           {shopExpanded && (
             <div className="bg-off-white/50 pb-2">
-              <p className="px-8 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wider text-gray-text">
-                CategorÃ­as
+              <p className="px-8 pb-1 pt-3 text-[10px] font-medium uppercase tracking-wider text-gray-text">
+                Categorías
               </p>
               {categories.map((cat) => (
                 <Link
                   key={cat.slug}
                   href={`/shop/categoria/${cat.slug}`}
                   onClick={onClose}
-                  className="block px-8 py-2 text-sm text-gray-text hover:text-black transition-colors"
+                  className="block px-8 py-2 text-sm text-gray-text transition-colors hover:text-black"
                 >
                   {cat.name}
                 </Link>
               ))}
-              <p className="px-8 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wider text-gray-text">
+              <p className="px-8 pb-1 pt-3 text-[10px] font-medium uppercase tracking-wider text-gray-text">
                 Marcas
               </p>
               {brands.map((brand) => (
@@ -61,7 +61,7 @@ export function MobileMenu({
                   key={brand.slug}
                   href={`/shop/marca/${brand.slug}`}
                   onClick={onClose}
-                  className="block px-8 py-2 text-sm text-gray-text hover:text-black transition-colors"
+                  className="block px-8 py-2 text-sm text-gray-text transition-colors hover:text-black"
                 >
                   {brand.name}
                 </Link>
@@ -69,14 +69,14 @@ export function MobileMenu({
               <Link
                 href="/shop"
                 onClick={onClose}
-                className="block px-8 py-2 text-sm font-medium hover:text-bronze transition-colors"
+                className="block px-8 py-2 text-sm font-medium transition-colors hover:text-bronze"
               >
-                Ver todo â†’
+                Ver todo →
               </Link>
               <Link
                 href="/sale"
                 onClick={onClose}
-                className="block px-8 py-2 text-sm font-medium uppercase tracking-[0.18em] text-red-600 hover:text-red-700 transition-colors"
+                className="block px-8 py-2 text-sm font-medium uppercase tracking-[0.18em] text-red-600 transition-colors hover:text-red-700"
               >
                 Ir al sale
               </Link>
@@ -87,35 +87,35 @@ export function MobileMenu({
         <Link
           href="/sale"
           onClick={onClose}
-          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider text-red-600 hover:bg-off-white transition-colors"
+          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider text-red-600 transition-colors hover:bg-off-white"
         >
           Sale
         </Link>
         <Link
           href="/como-comprar"
           onClick={onClose}
-          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider hover:bg-off-white transition-colors"
+          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider transition-colors hover:bg-off-white"
         >
-          CÃ³mo comprar
+          Cómo comprar
         </Link>
         <Link
           href="/nosotros"
           onClick={onClose}
-          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider hover:bg-off-white transition-colors"
+          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider transition-colors hover:bg-off-white"
         >
           Nosotros
         </Link>
         <Link
           href="/contacto"
           onClick={onClose}
-          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider hover:bg-off-white transition-colors"
+          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider transition-colors hover:bg-off-white"
         >
           Contacto
         </Link>
         <Link
           href="/seguimiento"
           onClick={onClose}
-          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider hover:bg-off-white transition-colors"
+          className="block px-6 py-3 text-sm font-medium uppercase tracking-wider transition-colors hover:bg-off-white"
         >
           Seguimiento
         </Link>

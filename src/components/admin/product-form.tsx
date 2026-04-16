@@ -136,7 +136,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
   }
 
   return (
-    <form action={formAction} className="space-y-8 max-w-3xl">
+    <form action={formAction} className="max-w-3xl space-y-8">
       <input type="hidden" name="images" value={JSON.stringify(images)} />
       <input type="hidden" name="sizes" value={JSON.stringify(sizes)} />
       <input
@@ -200,7 +200,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
           <Input
             id="price"
             name="price"
-            label="Precio"
+            label="Precio actual / promocional"
             type="number"
             step="0.01"
             defaultValue={product?.price}
@@ -209,12 +209,16 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
           <Input
             id="compareAtPrice"
             name="compareAtPrice"
-            label="Precio anterior (opcional)"
+            label="Precio original / de lista"
             type="number"
             step="0.01"
             defaultValue={product?.compareAtPrice ?? ""}
           />
         </div>
+        <p className="text-xs text-gray-text">
+          Si completas ambos precios, en la tienda se verá el precio original
+          tachado y el actual como precio promocional.
+        </p>
       </section>
 
       <section className="space-y-4">
@@ -237,7 +241,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
 
       <section className="space-y-4">
         <h2 className="font-heading text-lg font-semibold">Imágenes</h2>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex min-w-0 flex-wrap gap-2">
           <CldUploadWidget
             uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
             options={{
@@ -261,12 +265,12 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
           >
             {({ open }) => (
               <Button type="button" variant="secondary" onClick={() => open()}>
-                <Upload className="h-3.5 w-3.5 mr-1.5" />
+                <Upload className="mr-1.5 h-3.5 w-3.5" />
                 Subir imagen
               </Button>
             )}
           </CldUploadWidget>
-          <div className="flex gap-2 flex-1 min-w-0">
+          <div className="flex min-w-0 flex-1 gap-2">
             <Input
               id="newImage"
               label=""
@@ -291,7 +295,9 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
               <div
                 key={url}
                 draggable
-                onDragStart={() => { dragIndex.current = index; }}
+                onDragStart={() => {
+                  dragIndex.current = index;
+                }}
                 onDragEnter={() => setDragOverIndex(index)}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => {
@@ -306,15 +312,18 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
                   dragIndex.current = null;
                   setDragOverIndex(null);
                 }}
-                onDragEnd={() => { dragIndex.current = null; setDragOverIndex(null); }}
+                onDragEnd={() => {
+                  dragIndex.current = null;
+                  setDragOverIndex(null);
+                }}
                 className={cn(
-                  "relative group border p-1 cursor-grab active:cursor-grabbing transition-opacity",
+                  "relative cursor-grab border p-1 transition-opacity active:cursor-grabbing group",
                   dragOverIndex === index && dragIndex.current !== index
                     ? "border-black opacity-60"
                     : "border-border"
                 )}
               >
-                <div className="h-20 w-20 bg-off-white flex items-center justify-center text-xs text-gray-text overflow-hidden">
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden bg-off-white text-xs text-gray-text">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={url}
@@ -325,12 +334,12 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
                 <button
                   type="button"
                   onClick={() => removeImage(url)}
-                  className="absolute -top-2 -right-2 bg-error text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -right-2 -top-2 rounded-full bg-error p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
                 >
                   <X className="h-3 w-3" />
                 </button>
                 {index === 0 && (
-                  <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[10px] text-center">
+                  <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-center text-[10px] text-white">
                     Principal
                   </span>
                 )}
@@ -365,7 +374,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             size="sm"
             onClick={addCustomSize}
           >
-            <Plus className="h-3 w-3 mr-1" /> Custom
+            <Plus className="mr-1 h-3 w-3" /> Custom
           </Button>
         </div>
         {sizes.length > 0 && (
@@ -378,7 +387,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
                 <button
                   type="button"
                   onClick={() => toggleSize(index)}
-                  className={`text-sm font-medium text-left transition-colors ${
+                  className={`text-left text-sm font-medium transition-colors ${
                     size.isAvailable
                       ? "text-black"
                       : "text-gray-light line-through"

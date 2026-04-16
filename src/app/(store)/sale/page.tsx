@@ -11,7 +11,7 @@ interface Props {
 export const metadata: Metadata = {
   title: "Sale",
   description:
-    "DescubrÃ­ productos en promociÃ³n con stock disponible en Najo Indumentaria.",
+    "Descubrí productos en promoción con stock disponible en Najo Indumentaria.",
 };
 
 export default async function SalePage({ searchParams }: Props) {
@@ -35,7 +35,7 @@ export default async function SalePage({ searchParams }: Props) {
               Sale con stock real, sin humo.
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-gray-text sm:text-base">
-              AcÃ¡ ves solo productos en promociÃ³n que todavÃ­a tienen talles
+              Acá ves solo productos en promoción que todavía tienen talles
               disponibles. El precio original aparece tachado y el valor final
               queda bien claro.
             </p>
@@ -52,7 +52,7 @@ export default async function SalePage({ searchParams }: Props) {
               href="/shop"
               className="inline-flex h-12 items-center gap-2 border border-border bg-white px-5 text-xs font-medium uppercase tracking-[0.18em] transition-colors hover:border-black"
             >
-              Ver catalogo completo
+              Ver catálogo completo
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
