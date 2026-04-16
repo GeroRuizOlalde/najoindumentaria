@@ -7,16 +7,29 @@ import { Button } from "@/components/ui/button";
 interface CatalogFiltersProps {
   categories: { name: string; slug: string }[];
   brands: { name: string; slug: string }[];
+  sizeOptions?: string[];
+  showCategoryFilter?: boolean;
+  showBrandFilter?: boolean;
+  showSizeFilter?: boolean;
+  categoryLabel?: string;
 }
 
 const SORT_OPTIONS = [
   { value: "", label: "Relevancia" },
-  { value: "newest", label: "Mas nuevos" },
+  { value: "newest", label: "Más nuevos" },
   { value: "price_asc", label: "Precio: menor a mayor" },
   { value: "price_desc", label: "Precio: mayor a menor" },
 ];
 
-export function CatalogFilters({ categories, brands }: CatalogFiltersProps) {
+export function CatalogFilters({
+  categories,
+  brands,
+  sizeOptions = [],
+  showCategoryFilter = true,
+  showBrandFilter = true,
+  showSizeFilter = false,
+  categoryLabel = "Todos los tipos",
+}: CatalogFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -36,6 +49,11 @@ export function CatalogFilters({ categories, brands }: CatalogFiltersProps) {
     [pathname, router, searchParams]
   );
 
+  const clearAll = useCallback(() => {
+    setSearch("");
+    router.push(pathname);
+  }, [pathname, router]);
+
   return (
     <div className="mb-8 space-y-4">
       <form
@@ -49,32 +67,25 @@ export function CatalogFilters({ categories, brands }: CatalogFiltersProps) {
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por producto, marca o categoria"
+          placeholder="Buscar por producto, marca o categoría"
           className="h-10 w-full border border-border bg-white px-4 text-sm text-black placeholder:text-gray-light focus:border-black focus:outline-none"
         />
         <div className="flex gap-2">
           <Button type="submit">Buscar</Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setSearch("");
-              updateParam("search", "");
-            }}
-          >
+          <Button type="button" variant="outline" onClick={clearAll}>
             Limpiar
           </Button>
         </div>
       </form>
 
       <div className="flex flex-wrap items-center gap-3">
-        {pathname === "/shop" && (
+        {showCategoryFilter && (
           <select
             value={searchParams.get("categoria") || ""}
             onChange={(event) => updateParam("categoria", event.target.value)}
             className="h-9 border border-border bg-white px-3 text-xs focus:border-black focus:outline-none"
           >
-            <option value="">Todas las categorias</option>
+            <option value="">{categoryLabel}</option>
             {categories.map((category) => (
               <option key={category.slug} value={category.slug}>
                 {category.name}
@@ -83,7 +94,7 @@ export function CatalogFilters({ categories, brands }: CatalogFiltersProps) {
           </select>
         )}
 
-        {pathname === "/shop" && (
+        {showBrandFilter && (
           <select
             value={searchParams.get("marca") || ""}
             onChange={(event) => updateParam("marca", event.target.value)}
@@ -98,10 +109,25 @@ export function CatalogFilters({ categories, brands }: CatalogFiltersProps) {
           </select>
         )}
 
+        {showSizeFilter && (
+          <select
+            value={searchParams.get("talle") || ""}
+            onChange={(event) => updateParam("talle", event.target.value)}
+            className="h-9 border border-border bg-white px-3 text-xs focus:border-black focus:outline-none"
+          >
+            <option value="">Todos los talles</option>
+            {sizeOptions.map((size) => (
+              <option key={size} value={size}>
+                Talle {size}
+              </option>
+            ))}
+          </select>
+        )}
+
         <select
           value={searchParams.get("sort") || ""}
           onChange={(event) => updateParam("sort", event.target.value)}
-          className="ml-auto h-9 border border-border bg-white px-3 text-xs focus:border-black focus:outline-none"
+          className="h-9 border border-border bg-white px-3 text-xs focus:border-black focus:outline-none sm:ml-auto"
         >
           {SORT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>

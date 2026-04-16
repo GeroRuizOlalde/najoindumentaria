@@ -14,6 +14,7 @@ interface ProductFilters {
   limit?: number;
   availableSizesOnly?: boolean;
   onSaleOnly?: boolean;
+  sizeLabel?: string;
 }
 
 export async function getProducts(filters: ProductFilters = {}) {
@@ -30,7 +31,16 @@ export async function getProducts(filters: ProductFilters = {}) {
     limit = 12,
     availableSizesOnly = false,
     onSaleOnly = false,
+    sizeLabel,
   } = filters;
+
+  const sizeWhere = {
+    ...(availableSizesOnly && {
+      isAvailable: true,
+      stock: { gt: 0 as const },
+    }),
+    ...(sizeLabel && { sizeLabel }),
+  };
 
   const where = {
     ...(brandId && { brandId }),
@@ -40,12 +50,9 @@ export async function getProducts(filters: ProductFilters = {}) {
     ...(status && { status }),
     ...(featured !== undefined && { featured }),
     ...(onSaleOnly && { compareAtPrice: { not: null } }),
-    ...(availableSizesOnly && {
+    ...((availableSizesOnly || sizeLabel) && {
       sizes: {
-        some: {
-          isAvailable: true,
-          stock: { gt: 0 },
-        },
+        some: sizeWhere,
       },
     }),
     ...(search && {
@@ -87,9 +94,9 @@ export async function getProducts(filters: ProductFilters = {}) {
       include: {
         brand: { select: { name: true, slug: true } },
         category: { select: { name: true, slug: true } },
-        sizes: availableSizesOnly
+        sizes: availableSizesOnly || sizeLabel
           ? {
-              where: { isAvailable: true, stock: { gt: 0 } },
+              where: sizeWhere,
               select: { id: true, sizeLabel: true, isAvailable: true, stock: true },
             }
           : {
@@ -221,4 +228,24 @@ export async function getSaleProducts(page = 1, limit = 12) {
     availableSizesOnly: true,
     sort: "newest",
   });
+}
+
+export async function getAvailableSizeLabels({ onSaleOnly = false } = {}) {
+  const sizes = await prisma.productSize.findMany({
+    where: {
+      isAvailable: true,
+      stock: { gt: 0 },
+      product: {
+        status: "ACTIVE",
+        ...(onSaleOnly && {
+          compareAtPrice: { not: null },
+        }),
+      },
+    },
+    select: { sizeLabel: true },
+    distinct: ["sizeLabel"],
+    orderBy: { sizeLabel: "asc" },
+  });
+
+  return sizes.map((size) => size.sizeLabel);
 }

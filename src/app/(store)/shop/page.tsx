@@ -1,6 +1,9 @@
-import { getProducts } from "@/lib/queries/products";
 import { getActiveCategories } from "@/lib/queries/categories";
 import { getActiveBrands } from "@/lib/queries/brands";
+import {
+  getAvailableSizeLabels,
+  getProducts,
+} from "@/lib/queries/products";
 import { PageHeader } from "@/components/shared/page-header";
 import { CatalogFilters } from "@/components/store/catalog-filters";
 import { ProductGrid } from "@/components/store/product-grid";
@@ -10,6 +13,7 @@ interface Props {
     page?: string;
     categoria?: string;
     marca?: string;
+    talle?: string;
     search?: string;
     sort?: string;
   }>;
@@ -19,23 +23,26 @@ export default async function ShopPage({ searchParams }: Props) {
   const params = await searchParams;
   const page = parseInt(params.page || "1");
 
-  const [result, categories, brands] = await Promise.all([
+  const [result, categories, brands, sizeOptions] = await Promise.all([
     getProducts({
       page,
       status: "ACTIVE",
       categorySlug: params.categoria,
       brandSlug: params.marca,
+      sizeLabel: params.talle,
       search: params.search,
       sort: params.sort,
       availableSizesOnly: true,
     }),
     getActiveCategories(),
     getActiveBrands(),
+    getAvailableSizeLabels(),
   ]);
 
   const qsEntries: Record<string, string> = {};
   if (params.categoria) qsEntries.categoria = params.categoria;
   if (params.marca) qsEntries.marca = params.marca;
+  if (params.talle) qsEntries.talle = params.talle;
   if (params.search) qsEntries.search = params.search;
   if (params.sort) qsEntries.sort = params.sort;
 
@@ -46,7 +53,13 @@ export default async function ShopPage({ searchParams }: Props) {
         description={`${result.total} producto${result.total !== 1 ? "s" : ""}`}
       />
 
-      <CatalogFilters categories={categories} brands={brands} />
+      <CatalogFilters
+        categories={categories}
+        brands={brands}
+        sizeOptions={sizeOptions}
+        showSizeFilter
+        categoryLabel="Todos los tipos"
+      />
 
       <ProductGrid
         products={result.products}

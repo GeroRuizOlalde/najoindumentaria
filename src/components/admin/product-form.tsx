@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
@@ -78,6 +79,14 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
   useEffect(() => {
     if (autoSlug) setSlug(slugify(name));
   }, [name, autoSlug]);
+
+  useEffect(() => {
+    if (state.error) {
+      toast.error("No se pudo guardar el producto", {
+        description: state.error,
+      });
+    }
+  }, [state.error]);
 
   function addImage() {
     if (newImageUrl && !images.includes(newImageUrl)) {
