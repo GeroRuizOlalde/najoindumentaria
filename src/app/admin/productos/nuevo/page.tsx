@@ -1,7 +1,7 @@
 import { getActiveBrands } from "@/lib/queries/brands";
 import { getActiveCategories } from "@/lib/queries/categories";
 import { PageHeader } from "@/components/shared/page-header";
-import { ProductForm } from "@/components/admin/product-form";
+import { ProductDraftLoader } from "@/components/admin/product-draft-loader";
 import { requireAdminPermission } from "@/lib/admin-permissions";
 
 export default async function NewProductPage() {
@@ -17,7 +17,7 @@ export default async function NewProductPage() {
         title="Nuevo producto"
         description="Cargá un nuevo producto al catálogo"
       />
-      <ProductForm brands={brands} categories={categories} />
+      <ProductDraftLoader brands={brands} categories={categories} />
     </>
   );
 }

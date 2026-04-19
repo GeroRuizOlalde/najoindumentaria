@@ -32,40 +32,48 @@ interface Size {
   stock: number;
 }
 
+interface DraftProduct {
+  name: string;
+  slug: string;
+  brandId: string;
+  categoryId: string;
+  price: number;
+  compareAtPrice: number | null;
+  description: string;
+  shortDescription: string | null;
+  images: string[];
+  status: string;
+  featured: boolean;
+  sortOrder: number;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  sizes: Size[];
+}
+
 interface ProductFormProps {
   brands: Brand[];
   categories: Category[];
-  product?: {
-    id: string;
-    name: string;
-    slug: string;
-    brandId: string;
-    categoryId: string;
-    price: number;
-    compareAtPrice: number | null;
-    description: string;
-    shortDescription: string | null;
-    images: string[];
-    status: string;
-    featured: boolean;
-    sortOrder: number;
-    metaTitle: string | null;
-    metaDescription: string | null;
-    sizes: Size[];
-  };
+  initialDraft?: DraftProduct | null;
+  product?: DraftProduct & { id: string };
 }
 
-export function ProductForm({ brands, categories, product }: ProductFormProps) {
-  const [name, setName] = useState(product?.name ?? "");
-  const [slug, setSlug] = useState(product?.slug ?? "");
+export function ProductForm({
+  brands,
+  categories,
+  initialDraft,
+  product,
+}: ProductFormProps) {
+  const source = product ?? initialDraft;
+  const [name, setName] = useState(source?.name ?? "");
+  const [slug, setSlug] = useState(source?.slug ?? "");
   const [autoSlug, setAutoSlug] = useState(!product);
-  const [images, setImages] = useState<string[]>(product?.images ?? []);
+  const [images, setImages] = useState<string[]>(source?.images ?? []);
   const [newImageUrl, setNewImageUrl] = useState("");
-  const [sizes, setSizes] = useState<Size[]>(product?.sizes ?? []);
+  const [sizes, setSizes] = useState<Size[]>(source?.sizes ?? []);
   const [sizePreset, setSizePreset] = useState<"shoe" | "clothing" | "custom">(
     "shoe"
   );
-  const [featured, setFeatured] = useState(product?.featured ?? false);
+  const [featured, setFeatured] = useState(source?.featured ?? false);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragIndex = useRef<number | null>(null);
 
@@ -185,7 +193,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             name="brandId"
             label="Marca"
             placeholder="Seleccioná una marca"
-            defaultValue={product?.brandId}
+            defaultValue={source?.brandId}
             options={brands.map((brand) => ({
               value: brand.id,
               label: brand.name,
@@ -197,7 +205,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             name="categoryId"
             label="Categoría"
             placeholder="Seleccioná una categoría"
-            defaultValue={product?.categoryId}
+            defaultValue={source?.categoryId}
             options={categories.map((category) => ({
               value: category.id,
               label: category.name,
@@ -212,7 +220,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             label="Precio actual / promocional"
             type="number"
             step="0.01"
-            defaultValue={product?.price}
+            defaultValue={source?.price}
             required
           />
           <Input
@@ -221,7 +229,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             label="Precio original / de lista"
             type="number"
             step="0.01"
-            defaultValue={product?.compareAtPrice ?? ""}
+            defaultValue={source?.compareAtPrice ?? ""}
           />
         </div>
         <p className="text-xs text-gray-text">
@@ -236,14 +244,14 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
           id="shortDescription"
           name="shortDescription"
           label="Descripción corta (max 300 caracteres)"
-          defaultValue={product?.shortDescription ?? ""}
+          defaultValue={source?.shortDescription ?? ""}
           maxLength={300}
         />
         <Textarea
           id="description"
           name="description"
           label="Descripción completa"
-          defaultValue={product?.description ?? ""}
+          defaultValue={source?.description ?? ""}
           required
         />
       </section>
@@ -326,7 +334,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
                   setDragOverIndex(null);
                 }}
                 className={cn(
-                  "relative cursor-grab border p-1 transition-opacity active:cursor-grabbing group",
+                  "group relative cursor-grab border p-1 transition-opacity active:cursor-grabbing",
                   dragOverIndex === index && dragIndex.current !== index
                     ? "border-black opacity-60"
                     : "border-border"
@@ -337,7 +345,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
                   <img
                     src={url}
                     alt={`Imagen ${index + 1}`}
-                    className="h-full w-full object-cover pointer-events-none"
+                    className="pointer-events-none h-full w-full object-cover"
                   />
                 </div>
                 <button
@@ -436,7 +444,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             id="status"
             name="status"
             label="Estado"
-            defaultValue={product?.status ?? "DRAFT"}
+            defaultValue={source?.status ?? "DRAFT"}
             options={[
               { value: "DRAFT", label: "Borrador" },
               { value: "ACTIVE", label: "Activo" },
@@ -448,7 +456,7 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
             name="sortOrder"
             label="Orden"
             type="number"
-            defaultValue={product?.sortOrder ?? 0}
+            defaultValue={source?.sortOrder ?? 0}
           />
         </div>
         <label className="flex items-center gap-2 text-sm">
@@ -468,14 +476,14 @@ export function ProductForm({ brands, categories, product }: ProductFormProps) {
           id="metaTitle"
           name="metaTitle"
           label="Meta título (max 70)"
-          defaultValue={product?.metaTitle ?? ""}
+          defaultValue={source?.metaTitle ?? ""}
           maxLength={70}
         />
         <Input
           id="metaDescription"
           name="metaDescription"
           label="Meta descripción (max 160)"
-          defaultValue={product?.metaDescription ?? ""}
+          defaultValue={source?.metaDescription ?? ""}
           maxLength={160}
         />
       </section>
