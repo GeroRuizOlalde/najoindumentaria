@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import Link from "next/link";
 import { slugify } from "@/lib/utils";
@@ -45,10 +45,33 @@ interface ExcelProductAssistantProps {
 }
 
 const HEADER_ALIASES: Record<string, string[]> = {
-  name: ["producto", "nombre", "name", "articulo", "item"],
+  name: [
+    "producto",
+    "nombre",
+    "name",
+    "articulo",
+    "item",
+    "titulo de prenda",
+    "titulo",
+    "title",
+  ],
   brand: ["marca", "brand"],
-  category: ["categoria", "rubro", "tipo", "category"],
-  price: ["precio", "precio venta", "precio actual", "price"],
+  category: [
+    "categoria",
+    "rubro",
+    "tipo",
+    "category",
+    "tipo de prenda",
+  ],
+  price: [
+    "precio",
+    "precio venta",
+    "precio actual",
+    "price",
+    "precio venta x prenda",
+    "precio venta x prenda usd",
+    "precio venta prenda",
+  ],
   compareAtPrice: [
     "precio lista",
     "precio original",
@@ -58,9 +81,18 @@ const HEADER_ALIASES: Record<string, string[]> = {
   ],
   description: ["descripcion", "detalle", "description"],
   shortDescription: ["descripcion corta", "resumen", "short description"],
-  images: ["imagenes", "imagen", "foto", "fotos", "images"],
+  images: [
+    "imagenes",
+    "imagen",
+    "foto",
+    "fotos",
+    "images",
+    "link fotos",
+    "link foto",
+    "links fotos",
+  ],
   sizes: ["talles", "talle", "sizes", "size"],
-  stock: ["stock", "cantidad", "qty"],
+  stock: ["stock"],
 };
 
 const KNOWN_SIZE_LABELS = [
@@ -113,7 +145,8 @@ function findHeader(
 function toNumber(value: unknown) {
   if (typeof value === "number") return value;
   if (typeof value === "string") {
-    const parsed = Number(value.replace(",", "."));
+    const cleaned = value.replace(/[^0-9,.\-]/g, "").replace(",", ".");
+    const parsed = Number(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;
   }
   return 0;
@@ -122,7 +155,7 @@ function toNumber(value: unknown) {
 function splitList(value: unknown) {
   if (typeof value !== "string") return [];
   return value
-    .split(/[;,|]/)
+    .split(/[;,|\n]/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
@@ -136,13 +169,13 @@ function inferSizes(record: Record<string, unknown>) {
   );
 
   const directSizes = sizeColumn ? splitList(record[sizeColumn]) : [];
-  const directStock = stockColumn ? Math.max(1, toNumber(record[stockColumn])) : 1;
+  const directStock = stockColumn ? Math.max(0, toNumber(record[stockColumn])) : 0;
 
   if (directSizes.length > 0) {
     return directSizes.map((size) => ({
-      sizeLabel: size,
+      sizeLabel: size.toUpperCase(),
       isAvailable: directStock > 0,
-      stock: directStock > 0 ? directStock : 0,
+      stock: directStock,
     }));
   }
 
@@ -170,7 +203,7 @@ function mapWorkbookRows(
     categories.map((category) => [normalizeLookup(category.name), category.id])
   );
 
-  return rows
+  const mapped = rows
     .map((record, index): AssistantRow | null => {
       const headers = Object.keys(record);
       const nameHeader = findHeader(headers, "name");
@@ -205,7 +238,6 @@ function mapWorkbookRows(
       const sizes = inferSizes(record);
 
       if (!price) warnings.push("Precio faltante o inválido.");
-      if (sizes.length === 0) warnings.push("No se detectaron talles con stock.");
 
       return {
         sourceRow: index + 2,
@@ -232,20 +264,100 @@ function mapWorkbookRows(
       };
     })
     .filter((row): row is AssistantRow => !!row);
+
+  return groupByProduct(mapped);
+}
+
+function groupByProduct(rows: AssistantRow[]): AssistantRow[] {
+  const groups = new Map<string, AssistantRow>();
+
+  for (const row of rows) {
+    const key = `${normalizeLookup(row.name)}|${row.brandId || "_"}`;
+    const existing = groups.get(key);
+
+    if (!existing) {
+      groups.set(key, { ...row, sizes: [...row.sizes], warnings: [...row.warnings], images: [...row.images] });
+      continue;
+    }
+
+    for (const newSize of row.sizes) {
+      const match = existing.sizes.find(
+        (s) => s.sizeLabel === newSize.sizeLabel
+      );
+      if (match) {
+        match.stock += newSize.stock;
+        match.isAvailable = match.stock > 0;
+      } else {
+        existing.sizes.push(newSize);
+      }
+    }
+
+    for (const img of row.images) {
+      if (!existing.images.includes(img)) existing.images.push(img);
+    }
+
+    for (const warning of row.warnings) {
+      if (!existing.warnings.includes(warning)) existing.warnings.push(warning);
+    }
+
+    if (!existing.price && row.price) existing.price = row.price;
+  }
+
+  return Array.from(groups.values()).map((group) => {
+    const hasStock = group.sizes.some((s) => s.stock > 0);
+    if (!hasStock && !group.warnings.includes("Sin stock en ningún talle")) {
+      group.warnings.push("Sin stock en ningún talle");
+    }
+    return group;
+  });
+}
+
+function applyExchangeRate(rows: AssistantRow[], rate: number): AssistantRow[] {
+  if (!rate || rate === 1) return rows;
+  return rows.map((row) => ({
+    ...row,
+    price: Math.round(row.price * rate),
+    compareAtPrice:
+      row.compareAtPrice != null ? Math.round(row.compareAtPrice * rate) : null,
+  }));
 }
 
 export function ExcelProductAssistant({
   brands,
   categories,
 }: ExcelProductAssistantProps) {
-  const [rows, setRows] = useState<AssistantRow[]>([]);
+  const [rawRows, setRawRows] = useState<AssistantRow[]>([]);
   const [draftKey, setDraftKey] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
+  const [exchangeRate, setExchangeRate] = useState<number>(1);
+  const [showOutOfStock, setShowOutOfStock] = useState(false);
+
+  const rows = useMemo(
+    () => applyExchangeRate(rawRows, exchangeRate),
+    [rawRows, exchangeRate]
+  );
+
+  const visibleRows = useMemo(
+    () =>
+      showOutOfStock
+        ? rows
+        : rows.filter((row) => row.sizes.some((s) => s.stock > 0)),
+    [rows, showOutOfStock]
+  );
 
   const readyRows = useMemo(
-    () => rows.filter((row) => row.warnings.length === 0).length,
-    [rows]
+    () => visibleRows.filter((row) => row.warnings.length === 0).length,
+    [visibleRows]
   );
+
+  useEffect(() => {
+    if (!draftKey || rows.length === 0) return;
+    try {
+      sessionStorage.setItem(draftKey, JSON.stringify(rows));
+    } catch {
+      // sessionStorage quota o serializacion: ignoramos silenciosamente
+    }
+  }, [rows, draftKey]);
 
   async function handleFileChange(file: File | null) {
     if (!file) return;
@@ -253,16 +365,16 @@ export function ExcelProductAssistant({
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array" });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, {
-      defval: "",
-    });
+    const rawSheetRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(
+      firstSheet,
+      { defval: "" }
+    );
 
-    const mappedRows = mapWorkbookRows(rawRows, brands, categories);
+    const mappedRows = mapWorkbookRows(rawSheetRows, brands, categories);
     const nextDraftKey = `product-draft-${Date.now()}`;
 
-    sessionStorage.setItem(nextDraftKey, JSON.stringify(mappedRows));
+    setRawRows(mappedRows);
     setDraftKey(nextDraftKey);
-    setRows(mappedRows);
     setFileName(file.name);
   }
 
@@ -281,42 +393,82 @@ export function ExcelProductAssistant({
           que vos sigas cargando producto por producto.
         </p>
 
-        <label className="mt-5 flex cursor-pointer items-center justify-between border border-dashed border-border bg-off-white px-4 py-4 transition-colors hover:border-black">
-          <div>
-            <p className="text-sm font-medium">
-              {fileName || "Elegí un archivo .xlsx o .xls"}
-            </p>
-            <p className="mt-1 text-xs text-gray-text">
-              Se toma la primera hoja del Excel y no se sube a ningún lado.
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+          <label className="flex cursor-pointer items-center justify-between border border-dashed border-border bg-off-white px-4 py-4 transition-colors hover:border-black">
+            <div>
+              <p className="text-sm font-medium">
+                {fileName || "Elegí un archivo .xlsx o .xls"}
+              </p>
+              <p className="mt-1 text-xs text-gray-text">
+                Se toma la primera hoja del Excel y no se sube a ningún lado.
+              </p>
+            </div>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(event) =>
+                handleFileChange(event.target.files?.[0] ?? null)
+              }
+            />
+            <span className="border border-black px-3 py-2 text-xs font-medium uppercase tracking-wider">
+              Leer archivo
+            </span>
+          </label>
+
+          <div className="border border-border bg-off-white px-4 py-3">
+            <label className="text-xs font-medium uppercase tracking-wider text-gray-text">
+              Cotización USD → ARS
+            </label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={exchangeRate}
+              onChange={(event) =>
+                setExchangeRate(Number(event.target.value) || 0)
+              }
+              className="mt-2 w-full border border-border bg-white px-3 py-2 text-sm focus:border-black focus:outline-none"
+            />
+            <p className="mt-2 text-xs text-gray-text">
+              Si tu planilla ya está en pesos, dejá <strong>1</strong>.
+              Si está en USD, poné la cotización del día (ej. <strong>1200</strong>).
             </p>
           </div>
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            className="hidden"
-            onChange={(event) =>
-              handleFileChange(event.target.files?.[0] ?? null)
-            }
-          />
-          <span className="border border-black px-3 py-2 text-xs font-medium uppercase tracking-wider">
-            Leer archivo
-          </span>
-        </label>
+        </div>
       </div>
 
       {rows.length > 0 && (
         <div className="border border-border bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
             <div>
-              <p className="text-sm font-medium">{rows.length} filas detectadas</p>
+              <p className="text-sm font-medium">
+                {visibleRows.length} producto{visibleRows.length !== 1 && "s"} detectado
+                {visibleRows.length !== 1 && "s"}
+                {rows.length !== visibleRows.length && (
+                  <span className="text-gray-text">
+                    {" "}
+                    (de {rows.length} totales)
+                  </span>
+                )}
+              </p>
               <p className="text-xs text-gray-text">
-                {readyRows} listas para cargar sin observaciones.
+                {readyRows} listos para cargar sin observaciones.
               </p>
             </div>
+            <label className="flex items-center gap-2 text-xs text-gray-text">
+              <input
+                type="checkbox"
+                checked={showOutOfStock}
+                onChange={(event) => setShowOutOfStock(event.target.checked)}
+                className="h-4 w-4 border border-border"
+              />
+              Mostrar también agotados
+            </label>
           </div>
 
           <div className="divide-y divide-border">
-            {rows.map((row, index) => (
+            {visibleRows.map((row, index) => (
               <div
                 key={`${row.slug}-${index}`}
                 className="grid gap-3 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_220px]"
@@ -325,13 +477,22 @@ export function ExcelProductAssistant({
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-medium">{row.name}</p>
                     <span className="text-xs text-gray-text">
-                      Fila {row.sourceRow}
+                      {row.sizes.length} talle{row.sizes.length !== 1 && "s"}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-text">
-                    {row.sizes.length} talle{row.sizes.length !== 1 && "s"} con stock
+                    Stock total:{" "}
+                    {row.sizes.reduce((acc, s) => acc + s.stock, 0)} unidades
                     {" · "}
-                    {row.price > 0 ? `$${row.price}` : "Sin precio"}
+                    {row.price > 0
+                      ? `$${row.price.toLocaleString("es-AR")}`
+                      : "Sin precio"}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-text">
+                    Talles:{" "}
+                    {row.sizes
+                      .map((s) => `${s.sizeLabel} (${s.stock})`)
+                      .join(" · ") || "—"}
                   </p>
                   {row.warnings.length > 0 && (
                     <p className="mt-2 text-xs text-amber-700">
@@ -345,7 +506,7 @@ export function ExcelProductAssistant({
                       draftKey
                         ? `/admin/productos/nuevo?draft=${encodeURIComponent(
                             draftKey
-                          )}&row=${index}`
+                          )}&row=${rows.indexOf(row)}`
                         : "/admin/productos/nuevo"
                     }
                     className="inline-flex h-10 items-center justify-center border border-black px-4 text-xs font-medium uppercase tracking-wider transition-colors hover:bg-black hover:text-white"
