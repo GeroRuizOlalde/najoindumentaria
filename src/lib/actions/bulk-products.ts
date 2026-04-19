@@ -33,19 +33,31 @@ export interface BulkDraftInput {
 
 export interface BulkResult {
   created: string[];
+  createdWithoutImages: string[];
   failed: { name: string; reason: string }[];
 }
 
-function normalizeDriveUrl(url: string): string {
-  const match = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
-  if (match) {
-    return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-  }
+function extractDriveFileId(url: string): string | null {
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+  if (fileMatch) return fileMatch[1];
   const openMatch = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
-  if (openMatch) {
-    return `https://drive.google.com/uc?export=download&id=${openMatch[1]}`;
+  if (openMatch) return openMatch[1];
+  const ucMatch = url.match(/drive\.google\.com\/uc\?[^#]*id=([^&]+)/);
+  if (ucMatch) return ucMatch[1];
+  return null;
+}
+
+function buildCandidateUrls(url: string): string[] {
+  const trimmed = url.trim();
+  const driveId = extractDriveFileId(trimmed);
+  if (driveId) {
+    return [
+      `https://lh3.googleusercontent.com/d/${driveId}=s2048`,
+      `https://drive.usercontent.google.com/download?id=${driveId}&export=view`,
+      `https://drive.google.com/uc?export=view&id=${driveId}`,
+    ];
   }
-  return url;
+  return [trimmed];
 }
 
 async function ensureUniqueSlug(baseSlug: string): Promise<string> {
@@ -62,23 +74,27 @@ async function ensureUniqueSlug(baseSlug: string): Promise<string> {
 async function uploadImages(urls: string[]): Promise<string[]> {
   const uploaded: string[] = [];
   for (const rawUrl of urls) {
-    const trimmed = rawUrl.trim();
-    if (!trimmed) continue;
-    const url = normalizeDriveUrl(trimmed);
-    try {
-      const result = await cloudinary.uploader.upload(url, {
-        folder: "najo/productos",
-        resource_type: "image",
-      });
-      uploaded.push(result.secure_url);
-    } catch {
-      // URL inaccesible o no soportada por Cloudinary — seguimos con las demás
+    if (!rawUrl || !rawUrl.trim()) continue;
+    const candidates = buildCandidateUrls(rawUrl);
+    for (const candidate of candidates) {
+      try {
+        const result = await cloudinary.uploader.upload(candidate, {
+          folder: "najo/productos",
+          resource_type: "image",
+        });
+        uploaded.push(result.secure_url);
+        break;
+      } catch {
+        // probamos el próximo formato
+      }
     }
   }
   return uploaded;
 }
 
-async function createSingle(draft: BulkDraftInput): Promise<void> {
+async function createSingle(
+  draft: BulkDraftInput
+): Promise<{ uploadedImageCount: number }> {
   if (!draft.brandId) throw new Error("Marca no matcheada con admin");
   if (!draft.categoryId) throw new Error("Categoría no matcheada con admin");
   if (!draft.price || draft.price <= 0) throw new Error("Precio inválido");
@@ -94,11 +110,6 @@ async function createSingle(draft: BulkDraftInput): Promise<void> {
   if (validSizes.length === 0) throw new Error("Sin talles");
 
   const images = await uploadImages(draft.images);
-  if (images.length === 0) {
-    throw new Error(
-      "No se pudo subir ninguna imagen (verificá que las URLs sean públicas)"
-    );
-  }
 
   const description =
     draft.description && draft.description.trim().length >= 10
@@ -133,6 +144,8 @@ async function createSingle(draft: BulkDraftInput): Promise<void> {
       },
     },
   });
+
+  return { uploadedImageCount: images.length };
 }
 
 export async function bulkCreateProducts(
@@ -142,16 +155,24 @@ export async function bulkCreateProducts(
   if (!session?.user || !isSuperSuperAdminEmail(session.user.email)) {
     return {
       created: [],
+      createdWithoutImages: [],
       failed: drafts.map((d) => ({ name: d.name, reason: "No autorizado" })),
     };
   }
 
-  const result: BulkResult = { created: [], failed: [] };
+  const result: BulkResult = {
+    created: [],
+    createdWithoutImages: [],
+    failed: [],
+  };
 
   for (const draft of drafts) {
     try {
-      await createSingle(draft);
+      const { uploadedImageCount } = await createSingle(draft);
       result.created.push(draft.name);
+      if (uploadedImageCount === 0) {
+        result.createdWithoutImages.push(draft.name);
+      }
     } catch (err) {
       result.failed.push({
         name: draft.name,

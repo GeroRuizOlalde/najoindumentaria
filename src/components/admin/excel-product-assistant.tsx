@@ -341,6 +341,7 @@ export function ExcelProductAssistant({
     done: number;
     total: number;
     created: string[];
+    createdWithoutImages: string[];
     failed: { name: string; reason: string }[];
     skipped: { name: string; reason: string }[];
   } | null>(null);
@@ -411,13 +412,6 @@ export function ExcelProductAssistant({
         skipped.push({ name: row.name, reason: "Sin stock en ningún talle" });
         continue;
       }
-      if (row.images.length === 0) {
-        skipped.push({
-          name: row.name,
-          reason: "Sin URL de imagen en la planilla",
-        });
-        continue;
-      }
       ready.push(row);
     }
 
@@ -427,6 +421,7 @@ export function ExcelProductAssistant({
         done: 0,
         total: 0,
         created: [],
+        createdWithoutImages: [],
         failed: [],
         skipped,
       });
@@ -438,11 +433,13 @@ export function ExcelProductAssistant({
       done: 0,
       total: ready.length,
       created: [],
+      createdWithoutImages: [],
       failed: [],
       skipped,
     });
 
     const allCreated: string[] = [];
+    const allCreatedWithoutImages: string[] = [];
     const allFailed: { name: string; reason: string }[] = [];
 
     for (let i = 0; i < ready.length; i += 1) {
@@ -453,6 +450,7 @@ export function ExcelProductAssistant({
       } catch (error) {
         result = {
           created: [],
+          createdWithoutImages: [],
           failed: [
             {
               name: row.name,
@@ -464,6 +462,7 @@ export function ExcelProductAssistant({
       }
 
       allCreated.push(...result.created);
+      allCreatedWithoutImages.push(...result.createdWithoutImages);
       allFailed.push(...result.failed);
 
       setBulkState({
@@ -471,6 +470,7 @@ export function ExcelProductAssistant({
         done: i + 1,
         total: ready.length,
         created: [...allCreated],
+        createdWithoutImages: [...allCreatedWithoutImages],
         failed: [...allFailed],
         skipped,
       });
@@ -606,15 +606,20 @@ export function ExcelProductAssistant({
                 </p>
               ) : (
                 <p className="font-medium">
-                  Proceso finalizado: {bulkState.created.length} creados,
-                  {" "}
-                  {bulkState.failed.length} fallidos,
-                  {" "}
+                  Proceso finalizado: {bulkState.created.length} creados
+                  {bulkState.createdWithoutImages.length > 0 && (
+                    <>
+                      {" "}
+                      ({bulkState.createdWithoutImages.length} sin imágenes)
+                    </>
+                  )}
+                  , {bulkState.failed.length} fallidos,{" "}
                   {bulkState.skipped.length} salteados.
                 </p>
               )}
               {(bulkState.failed.length > 0 ||
-                bulkState.skipped.length > 0) && (
+                bulkState.skipped.length > 0 ||
+                bulkState.createdWithoutImages.length > 0) && (
                 <details className="mt-2 text-xs text-gray-text">
                   <summary className="cursor-pointer font-medium">
                     Ver detalle
@@ -623,6 +628,11 @@ export function ExcelProductAssistant({
                     {bulkState.failed.map((f, idx) => (
                       <li key={`f-${idx}`} className="text-red-700">
                         ❌ {f.name} — {f.reason}
+                      </li>
+                    ))}
+                    {bulkState.createdWithoutImages.map((name, idx) => (
+                      <li key={`ni-${idx}`} className="text-blue-700">
+                        📷 {name} — creado sin imágenes, subir a mano
                       </li>
                     ))}
                     {bulkState.skipped.map((s, idx) => (
