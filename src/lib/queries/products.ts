@@ -85,12 +85,16 @@ export async function getProducts(filters: ProductFilters = {}) {
           ? [{ createdAt: "desc" as const }]
           : [{ sortOrder: "asc" as const }, { createdAt: "desc" as const }];
 
+  const paginated = limit > 0;
+
   const [products, total] = await Promise.all([
     prisma.product.findMany({
       where,
       orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
+      ...(paginated && {
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
       include: {
         brand: { select: { name: true, slug: true } },
         category: { select: { name: true, slug: true } },
@@ -110,8 +114,8 @@ export async function getProducts(filters: ProductFilters = {}) {
   return {
     products,
     total,
-    totalPages: Math.ceil(total / limit),
-    currentPage: page,
+    totalPages: paginated ? Math.ceil(total / limit) : 1,
+    currentPage: paginated ? page : 1,
   };
 }
 

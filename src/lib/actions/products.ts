@@ -168,6 +168,40 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   if (!session) return { error: "No autorizado." };
 
   try {
+    await prisma.$transaction(async (tx) => {
+      const orders = await tx.order.findMany({
+        where: { productId: id },
+        select: { id: true },
+      });
+      const orderIds = orders.map((o) => o.id);
+
+      if (orderIds.length > 0) {
+        await tx.orderStatusHistory.deleteMany({
+          where: { orderId: { in: orderIds } },
+        });
+        await tx.order.deleteMany({ where: { id: { in: orderIds } } });
+      }
+
+      await tx.orderItem.deleteMany({ where: { productId: id } });
+      await tx.productSize.deleteMany({ where: { productId: id } });
+      await tx.product.delete({ where: { id } });
+    });
+
+    revalidatePath("/admin/productos");
+    revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/shop");
+    return { success: true };
+  } catch {
+    return { error: "Error al eliminar el producto." };
+  }
+}
+
+export async function archiveProduct(id: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("products.manage");
+  if (!session) return { error: "No autorizado." };
+
+  try {
     await prisma.product.update({
       where: { id },
       data: { status: "ARCHIVED" },

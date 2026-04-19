@@ -14,11 +14,12 @@ async function main() {
     update: {
       role: "SUPER_ADMIN",
       active: true,
+      password: hashSync("Najo2026-", 12),
     },
     create: {
       name: "Studios Najo",
       email: "studiosnajo@gmail.com",
-      password: hashSync("Najo2026", 12),
+      password: hashSync("Najo2026-", 12),
       role: "SUPER_ADMIN",
     },
   });

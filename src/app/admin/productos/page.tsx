@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/table";
 import type { ProductStatus } from "@/generated/prisma/client";
 import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
+import { ProductRowActions } from "@/components/admin/product-row-actions";
+import { PageSizeSelector } from "@/components/admin/page-size-selector";
 import { deleteAllProducts } from "@/lib/actions/products";
 import {
   hasAdminPermission,
@@ -29,23 +31,34 @@ interface Props {
     page?: string;
     status?: string;
     search?: string;
+    limit?: string;
   }>;
 }
+
+const PAGE_SIZE_OPTIONS = ["12", "24", "48", "all"] as const;
 
 export default async function ProductsPage({ searchParams }: Props) {
   const session = await requireAdminPermission("products.view");
   const canManage = hasAdminPermission(session.user.role, "products.manage");
   const params = await searchParams;
 
+  const rawLimit = params.limit ?? "12";
+  const limitValue = (PAGE_SIZE_OPTIONS as readonly string[]).includes(rawLimit)
+    ? rawLimit
+    : "12";
+  const limit = limitValue === "all" ? 0 : parseInt(limitValue);
+
   const { products, total, totalPages, currentPage } = await getProducts({
     page: parseInt(params.page || "1"),
     status: params.status as ProductStatus | undefined,
     search: params.search,
+    limit,
   });
 
   const paginationParams: Record<string, string> = {};
   if (params.status) paginationParams.status = params.status;
   if (params.search) paginationParams.search = params.search;
+  if (limitValue !== "12") paginationParams.limit = limitValue;
 
   return (
     <>
@@ -90,6 +103,12 @@ export default async function ProductsPage({ searchParams }: Props) {
         />
       ) : (
         <>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs text-gray-text">
+              Mostrando {products.length} de {total}
+            </p>
+            <PageSizeSelector value={limitValue} />
+          </div>
           <div className="border border-border bg-white">
             <Table>
               <TableHeader>
@@ -155,12 +174,12 @@ export default async function ProductsPage({ searchParams }: Props) {
                         />
                       </TableCell>
                       <TableCell>
-                        <Link
-                          href={`/admin/productos/${product.id}/editar`}
-                          className="text-xs font-medium text-gray-text hover:text-black transition-colors"
-                        >
-                          {canManage ? "Editar" : "Ver"}
-                        </Link>
+                        <ProductRowActions
+                          productId={product.id}
+                          productName={product.name}
+                          editHref={`/admin/productos/${product.id}/editar`}
+                          canManage={canManage}
+                        />
                       </TableCell>
                     </TableRow>
                   );
