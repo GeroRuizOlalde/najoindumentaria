@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import Link from "next/link";
 import { slugify } from "@/lib/utils";
+import {
+  bulkCreateProducts,
+  type BulkDraftInput,
+  type BulkResult,
+} from "@/lib/actions/bulk-products";
 
 interface Brand {
   id: string;
@@ -331,6 +336,14 @@ export function ExcelProductAssistant({
   const [fileName, setFileName] = useState("");
   const [exchangeRate, setExchangeRate] = useState<number>(1);
   const [showOutOfStock, setShowOutOfStock] = useState(false);
+  const [bulkState, setBulkState] = useState<{
+    running: boolean;
+    done: number;
+    total: number;
+    created: string[];
+    failed: { name: string; reason: string }[];
+    skipped: { name: string; reason: string }[];
+  } | null>(null);
 
   const rows = useMemo(
     () => applyExchangeRate(rawRows, exchangeRate),
@@ -358,6 +371,111 @@ export function ExcelProductAssistant({
       // sessionStorage quota o serializacion: ignoramos silenciosamente
     }
   }, [rows, draftKey]);
+
+  function toDraftInput(row: AssistantRow): BulkDraftInput {
+    return {
+      name: row.name,
+      slug: row.slug,
+      brandId: row.brandId,
+      categoryId: row.categoryId,
+      price: row.price,
+      compareAtPrice: row.compareAtPrice,
+      description: row.description,
+      shortDescription: row.shortDescription,
+      images: row.images,
+      sizes: row.sizes,
+    };
+  }
+
+  async function handleBulkCreate() {
+    if (bulkState?.running) return;
+
+    const candidates = visibleRows;
+    const skipped: { name: string; reason: string }[] = [];
+    const ready: AssistantRow[] = [];
+
+    for (const row of candidates) {
+      if (!row.brandId) {
+        skipped.push({ name: row.name, reason: "Marca no matcheada" });
+        continue;
+      }
+      if (!row.categoryId) {
+        skipped.push({ name: row.name, reason: "Categoría no matcheada" });
+        continue;
+      }
+      if (!row.price) {
+        skipped.push({ name: row.name, reason: "Precio faltante" });
+        continue;
+      }
+      if (!row.sizes.some((s) => s.stock > 0)) {
+        skipped.push({ name: row.name, reason: "Sin stock en ningún talle" });
+        continue;
+      }
+      if (row.images.length === 0) {
+        skipped.push({
+          name: row.name,
+          reason: "Sin URL de imagen en la planilla",
+        });
+        continue;
+      }
+      ready.push(row);
+    }
+
+    if (ready.length === 0) {
+      setBulkState({
+        running: false,
+        done: 0,
+        total: 0,
+        created: [],
+        failed: [],
+        skipped,
+      });
+      return;
+    }
+
+    setBulkState({
+      running: true,
+      done: 0,
+      total: ready.length,
+      created: [],
+      failed: [],
+      skipped,
+    });
+
+    const allCreated: string[] = [];
+    const allFailed: { name: string; reason: string }[] = [];
+
+    for (let i = 0; i < ready.length; i += 1) {
+      const row = ready[i];
+      let result: BulkResult;
+      try {
+        result = await bulkCreateProducts([toDraftInput(row)]);
+      } catch (error) {
+        result = {
+          created: [],
+          failed: [
+            {
+              name: row.name,
+              reason:
+                error instanceof Error ? error.message : "Error de red",
+            },
+          ],
+        };
+      }
+
+      allCreated.push(...result.created);
+      allFailed.push(...result.failed);
+
+      setBulkState({
+        running: i < ready.length - 1,
+        done: i + 1,
+        total: ready.length,
+        created: [...allCreated],
+        failed: [...allFailed],
+        skipped,
+      });
+    }
+  }
 
   async function handleFileChange(file: File | null) {
     if (!file) return;
@@ -456,16 +574,81 @@ export function ExcelProductAssistant({
                 {readyRows} listos para cargar sin observaciones.
               </p>
             </div>
-            <label className="flex items-center gap-2 text-xs text-gray-text">
-              <input
-                type="checkbox"
-                checked={showOutOfStock}
-                onChange={(event) => setShowOutOfStock(event.target.checked)}
-                className="h-4 w-4 border border-border"
-              />
-              Mostrar también agotados
-            </label>
+            <div className="flex flex-wrap items-center gap-4">
+              <label className="flex items-center gap-2 text-xs text-gray-text">
+                <input
+                  type="checkbox"
+                  checked={showOutOfStock}
+                  onChange={(event) => setShowOutOfStock(event.target.checked)}
+                  className="h-4 w-4 border border-border"
+                />
+                Mostrar también agotados
+              </label>
+              <button
+                type="button"
+                onClick={handleBulkCreate}
+                disabled={bulkState?.running || visibleRows.length === 0}
+                className="inline-flex h-10 items-center justify-center border border-black bg-black px-4 text-xs font-medium uppercase tracking-wider text-white transition-colors hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {bulkState?.running
+                  ? `Creando ${bulkState.done}/${bulkState.total}...`
+                  : "Crear todos automáticamente"}
+              </button>
+            </div>
           </div>
+
+          {bulkState && (
+            <div className="border-b border-border bg-off-white px-5 py-4 text-sm">
+              {bulkState.running ? (
+                <p className="font-medium">
+                  Procesando {bulkState.done} de {bulkState.total}... No cierres
+                  esta pestaña.
+                </p>
+              ) : (
+                <p className="font-medium">
+                  Proceso finalizado: {bulkState.created.length} creados,
+                  {" "}
+                  {bulkState.failed.length} fallidos,
+                  {" "}
+                  {bulkState.skipped.length} salteados.
+                </p>
+              )}
+              {(bulkState.failed.length > 0 ||
+                bulkState.skipped.length > 0) && (
+                <details className="mt-2 text-xs text-gray-text">
+                  <summary className="cursor-pointer font-medium">
+                    Ver detalle
+                  </summary>
+                  <ul className="mt-2 space-y-1">
+                    {bulkState.failed.map((f, idx) => (
+                      <li key={`f-${idx}`} className="text-red-700">
+                        ❌ {f.name} — {f.reason}
+                      </li>
+                    ))}
+                    {bulkState.skipped.map((s, idx) => (
+                      <li key={`s-${idx}`} className="text-amber-700">
+                        ⚠ {s.name} — {s.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+              {bulkState.created.length > 0 && !bulkState.running && (
+                <p className="mt-2 text-xs">
+                  Los productos se crearon como <strong>borrador (DRAFT)</strong>.
+                  {" "}
+                  Revisalos en{" "}
+                  <Link
+                    href="/admin/productos"
+                    className="underline hover:text-black"
+                  >
+                    /admin/productos
+                  </Link>{" "}
+                  y pasalos a ACTIVE cuando estén OK.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="divide-y divide-border">
             {visibleRows.map((row, index) => (
