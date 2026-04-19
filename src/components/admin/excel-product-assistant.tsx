@@ -173,14 +173,27 @@ function inferSizes(record: Record<string, unknown>) {
     HEADER_ALIASES.stock.includes(normalizeHeader(key))
   );
 
-  const directSizes = sizeColumn ? splitList(record[sizeColumn]) : [];
-  const directStock = stockColumn ? Math.max(0, toNumber(record[stockColumn])) : 0;
+  const stock = stockColumn ? Math.max(0, toNumber(record[stockColumn])) : 0;
 
-  if (directSizes.length > 0) {
-    return directSizes.map((size) => ({
+  if (sizeColumn) {
+    const raw = String(record[sizeColumn] ?? "").trim();
+
+    if (!raw || raw === "-") {
+      return [{ sizeLabel: "ÚNICO", isAvailable: stock > 0, stock }];
+    }
+
+    const sizes = splitList(raw)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && s !== "-");
+
+    if (sizes.length === 0) {
+      return [{ sizeLabel: "ÚNICO", isAvailable: stock > 0, stock }];
+    }
+
+    return sizes.map((size) => ({
       sizeLabel: size.toUpperCase(),
-      isAvailable: directStock > 0,
-      stock: directStock,
+      isAvailable: stock > 0,
+      stock,
     }));
   }
 
