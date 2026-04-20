@@ -53,6 +53,7 @@ export async function updateSettings(
 
 function resolveGroupForKey(key: string, fallbackGroup: string) {
   if (key.startsWith("bank_")) return "bank";
+  if (key.startsWith("crypto_")) return "crypto";
   if (key.startsWith("company_")) return "company";
   if (key.startsWith("email_")) return "email";
   if (key.startsWith("content_")) return "content";

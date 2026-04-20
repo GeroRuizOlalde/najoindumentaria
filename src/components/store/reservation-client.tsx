@@ -35,6 +35,12 @@ interface ReservationClientProps {
     accountType?: string;
     instructions?: string;
   };
+  cryptoDetails?: {
+    enabled: boolean;
+    usdtAddress?: string;
+    network?: string;
+    instructions?: string;
+  };
   whatsappNumber?: string;
   customer?: CustomerData | null;
 }
@@ -49,6 +55,7 @@ export function ReservationClient({
   sizeLabel,
   price,
   bankDetails,
+  cryptoDetails,
   whatsappNumber,
   customer,
 }: ReservationClientProps) {
@@ -63,6 +70,7 @@ export function ReservationClient({
         orderCode={state.orderCode}
         trackingToken={state.trackingToken}
         bankDetails={bankDetails}
+        cryptoDetails={cryptoDetails}
         whatsappNumber={whatsappNumber}
       />
     );

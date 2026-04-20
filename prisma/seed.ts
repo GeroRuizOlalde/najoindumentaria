@@ -248,6 +248,15 @@ async function main() {
         "Realizá la transferencia por el monto exacto indicado. Luego enviá el comprobante por WhatsApp o email indicando tu código de reserva.",
       group: "bank",
     },
+    { key: "crypto_enabled", value: "false", group: "crypto" },
+    { key: "crypto_usdt_address", value: "", group: "crypto" },
+    { key: "crypto_network", value: "BEP20", group: "crypto" },
+    {
+      key: "crypto_instructions",
+      value:
+        "Enviá el monto exacto en USDT a la dirección indicada usando la red BEP20 (BSC). Luego mandá el hash de la transacción por WhatsApp o email junto con tu código de reserva.",
+      group: "crypto",
+    },
     { key: "company_name", value: "NAJO Indumentaria", group: "general" },
     {
       key: "company_email",

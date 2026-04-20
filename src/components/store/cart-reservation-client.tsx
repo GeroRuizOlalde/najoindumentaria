@@ -31,6 +31,12 @@ interface CartReservationClientProps {
     accountType?: string;
     instructions?: string;
   };
+  cryptoDetails?: {
+    enabled: boolean;
+    usdtAddress?: string;
+    network?: string;
+    instructions?: string;
+  };
   whatsappNumber?: string;
   customer?: CustomerData | null;
 }
@@ -39,6 +45,7 @@ const initialState: CartReservationResult = {};
 
 export function CartReservationClient({
   bankDetails,
+  cryptoDetails,
   whatsappNumber,
   customer,
 }: CartReservationClientProps) {
@@ -70,6 +77,7 @@ export function CartReservationClient({
         orderCode={state.orderCode}
         trackingToken={state.trackingToken}
         bankDetails={bankDetails}
+        cryptoDetails={cryptoDetails}
         whatsappNumber={whatsappNumber}
         subtotalAmount={state.subtotalAmount}
         discountAmount={state.discountAmount}

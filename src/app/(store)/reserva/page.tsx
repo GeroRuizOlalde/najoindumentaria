@@ -45,12 +45,20 @@ export default async function ReservaPage({ searchParams }: Props) {
     instructions: settings.bank_instructions,
   };
 
+  const cryptoDetails = {
+    enabled: settings.crypto_enabled?.toLowerCase() === "true" && Boolean(settings.crypto_usdt_address),
+    usdtAddress: settings.crypto_usdt_address,
+    network: settings.crypto_network,
+    instructions: settings.crypto_instructions,
+  };
+
   // Cart checkout mode
   if (params.from === "cart") {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10 lg:px-8">
         <CartReservationClient
           bankDetails={bankDetails}
+          cryptoDetails={cryptoDetails}
           whatsappNumber={settings.whatsapp_number}
           customer={customerData}
         />
@@ -92,6 +100,7 @@ export default async function ReservaPage({ searchParams }: Props) {
         sizeLabel={size.sizeLabel}
         price={formatPriceFromDecimal(Number(size.product.price))}
         bankDetails={bankDetails}
+        cryptoDetails={cryptoDetails}
         whatsappNumber={settings.whatsapp_number}
         customer={customerData}
       />

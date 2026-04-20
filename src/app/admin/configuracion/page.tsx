@@ -13,6 +13,13 @@ const BANK_FIELDS = [
   { key: "bank_instructions", label: "Instrucciones adicionales", type: "textarea" as const },
 ];
 
+const CRYPTO_FIELDS = [
+  { key: "crypto_enabled", label: "Habilitar pago con cripto (escribí \"true\" para activar)", placeholder: "true o false" },
+  { key: "crypto_usdt_address", label: "Dirección USDT", placeholder: "Ej: 0xabc123..." },
+  { key: "crypto_network", label: "Red", placeholder: "BEP20, TRC20, ERC20" },
+  { key: "crypto_instructions", label: "Instrucciones adicionales", type: "textarea" as const },
+];
+
 const COMPANY_FIELDS = [
   { key: "company_name", label: "Nombre de la empresa" },
   { key: "company_email", label: "Email" },
@@ -42,6 +49,7 @@ export default async function SettingsPage() {
 
   const sections = [
     { title: "Datos bancarios", description: "Se muestran al cliente cuando hace una reserva.", group: "bank", fields: BANK_FIELDS },
+    { title: "Pago con criptomoneda", description: "Dirección USDT y red que se muestran al cliente como alternativa a la transferencia bancaria. El monto se convierte de ARS a USDT en vivo.", group: "crypto", fields: CRYPTO_FIELDS },
     { title: "Empresa", description: "Información general de la empresa.", group: "company", fields: COMPANY_FIELDS },
     { title: "Redes sociales", description: "Links a redes sociales y WhatsApp.", group: "social", fields: SOCIAL_FIELDS },
     { title: "Email", description: "Configuración del remitente de emails.", group: "email", fields: EMAIL_FIELDS },
