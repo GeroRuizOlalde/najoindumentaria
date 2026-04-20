@@ -17,6 +17,8 @@ import { FormattedPrice } from "@/components/shared/formatted-price";
 import { Card, CardTitle } from "@/components/ui/card";
 import { OrderStatusChanger } from "@/components/admin/order-status-changer";
 import { OrderDetailsForm } from "@/components/admin/order-details-form";
+import { DeleteButton } from "@/components/admin/delete-button";
+import { deleteOrder } from "@/lib/actions/orders";
 import { formatDateAR } from "@/lib/utils";
 import {
   DELIVERY_METHOD_LABELS,
@@ -288,6 +290,23 @@ export default async function OrderDetailPage({ params }: Props) {
                     shippingAddress={order.shippingAddress}
                     paymentProof={order.paymentProof}
                     adminNotes={order.adminNotes}
+                  />
+                </div>
+              </Card>
+
+              <Card>
+                <CardTitle>Zona de riesgo</CardTitle>
+                <p className="mt-2 text-xs text-gray-text">
+                  Eliminar el pedido borra también su historial. Si está pendiente se restaura el stock y el uso del cupón.
+                </p>
+                <div className="mt-4">
+                  <DeleteButton
+                    action={deleteOrder.bind(null, order.id)}
+                    variant="button"
+                    buttonLabel="Eliminar pedido"
+                    confirmTitle={`Eliminar pedido ${order.orderCode}`}
+                    confirmDescription="Esta acción elimina el pedido y su historial de forma permanente. No se puede deshacer."
+                    redirectTo="/admin/pedidos"
                   />
                 </div>
               </Card>

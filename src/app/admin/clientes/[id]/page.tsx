@@ -7,14 +7,20 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { formatPriceFromDecimal, formatDateAR } from "@/lib/utils";
 import type { OrderStatusType } from "@/lib/constants";
-import { requireAdminPermission } from "@/lib/admin-permissions";
+import {
+  hasAdminPermission,
+  requireAdminPermission,
+} from "@/lib/admin-permissions";
+import { DeleteButton } from "@/components/admin/delete-button";
+import { deleteCustomer } from "@/lib/actions/customers";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export default async function CustomerDetailPage({ params }: Props) {
-  await requireAdminPermission("customers.view");
+  const session = await requireAdminPermission("customers.view");
+  const canManage = hasAdminPermission(session.user.role, "customers.manage");
   const { id } = await params;
   const customer = await getCustomerById(id);
 
@@ -28,7 +34,21 @@ export default async function CustomerDetailPage({ params }: Props) {
 
   return (
     <>
-      <PageHeader title={customer.name} />
+      <PageHeader
+        title={customer.name}
+        action={
+          canManage ? (
+            <DeleteButton
+              action={deleteCustomer.bind(null, customer.id)}
+              variant="button"
+              buttonLabel="Eliminar cliente"
+              confirmTitle={`Eliminar cliente ${customer.name}`}
+              confirmDescription={`Se eliminarán el cliente y sus ${customer.orders.length} pedido(s) asociados de forma permanente. Esta acción no se puede deshacer.`}
+              redirectTo="/admin/clientes"
+            />
+          ) : null
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card>

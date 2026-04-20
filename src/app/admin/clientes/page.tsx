@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/table";
 import { formatDateAR } from "@/lib/utils";
 import { BulkDeleteButton } from "@/components/admin/bulk-delete-button";
-import { deleteAllCustomers } from "@/lib/actions/customers";
+import { DeleteButton } from "@/components/admin/delete-button";
+import { deleteAllCustomers, deleteCustomer } from "@/lib/actions/customers";
 import {
   hasAdminPermission,
   requireAdminPermission,
@@ -79,6 +80,7 @@ export default async function CustomersPage({ searchParams }: Props) {
                   <TableHead>Ubicacion</TableHead>
                   <TableHead>Pedidos</TableHead>
                   <TableHead>Ultimo pedido</TableHead>
+                  {canManage && <TableHead></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -107,6 +109,16 @@ export default async function CustomersPage({ searchParams }: Props) {
                         ? formatDateAR(customer.orders[0].createdAt, "dd/MM/yy")
                         : "-"}
                     </TableCell>
+                    {canManage && (
+                      <TableCell>
+                        <DeleteButton
+                          action={deleteCustomer.bind(null, customer.id)}
+                          confirmTitle={`Eliminar cliente ${customer.name}`}
+                          confirmDescription={`Se eliminarán el cliente y sus ${customer._count.orders} pedido(s) asociados de forma permanente. Esta acción no se puede deshacer.`}
+                          title="Eliminar cliente"
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

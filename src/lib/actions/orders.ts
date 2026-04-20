@@ -152,6 +152,81 @@ export async function unarchiveOrder(orderId: string): Promise<ActionResult> {
   }
 }
 
+export async function deleteOrder(orderId: string): Promise<ActionResult> {
+  const session = await getAdminActionSession("orders.manage");
+  if (!session) return { error: "No autorizado." };
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        coupon: { select: { id: true } },
+        items: {
+          select: {
+            productId: true,
+            sizeLabel: true,
+            quantity: true,
+          },
+        },
+      },
+    });
+
+    if (!order) return { error: "Pedido no encontrado." };
+
+    const shouldRestoreStock =
+      order.status === "PENDING" || order.status === "PAYMENT_RECEIVED";
+
+    await prisma.$transaction(async (tx) => {
+      if (shouldRestoreStock) {
+        if (order.coupon?.id) {
+          await tx.coupon.updateMany({
+            where: { id: order.coupon.id, usedCount: { gt: 0 } },
+            data: { usedCount: { decrement: 1 } },
+          });
+        }
+
+        const itemsToRestore =
+          order.items.length > 0
+            ? order.items
+            : order.productId && order.sizeLabel
+              ? [
+                  {
+                    productId: order.productId,
+                    sizeLabel: order.sizeLabel,
+                    quantity: 1,
+                  },
+                ]
+              : [];
+
+        await Promise.all(
+          itemsToRestore.map((item) =>
+            tx.productSize.updateMany({
+              where: {
+                productId: item.productId,
+                sizeLabel: item.sizeLabel,
+              },
+              data: {
+                stock: { increment: item.quantity },
+                isAvailable: true,
+              },
+            })
+          )
+        );
+      }
+
+      await tx.orderStatusHistory.deleteMany({ where: { orderId } });
+      await tx.orderItem.deleteMany({ where: { orderId } });
+      await tx.order.delete({ where: { id: orderId } });
+    });
+
+    revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/dashboard");
+    return { success: true };
+  } catch {
+    return { error: "Error al eliminar el pedido." };
+  }
+}
+
 export async function updateOrderDetails(
   orderId: string,
   data: {

@@ -16,7 +16,12 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { ArchiveOrderButton } from "@/components/admin/archive-order-button";
-import { requireAdminPermission } from "@/lib/admin-permissions";
+import { DeleteButton } from "@/components/admin/delete-button";
+import { deleteOrder } from "@/lib/actions/orders";
+import {
+  hasAdminPermission,
+  requireAdminPermission,
+} from "@/lib/admin-permissions";
 import { ListToolbar } from "@/components/admin/list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -30,7 +35,8 @@ interface Props {
 }
 
 export default async function OrdersPage({ searchParams }: Props) {
-  await requireAdminPermission("orders.view");
+  const session = await requireAdminPermission("orders.view");
+  const canManage = hasAdminPermission(session.user.role, "orders.manage");
   const params = await searchParams;
   const isArchived = params.archived === "true";
 
@@ -182,10 +188,20 @@ export default async function OrdersPage({ searchParams }: Props) {
                       {formatDateAR(order.createdAt, "dd/MM/yy HH:mm")}
                     </TableCell>
                     <TableCell>
-                      <ArchiveOrderButton
-                        orderId={order.id}
-                        isArchived={!!order.archivedAt}
-                      />
+                      <div className="flex items-center gap-3">
+                        <ArchiveOrderButton
+                          orderId={order.id}
+                          isArchived={!!order.archivedAt}
+                        />
+                        {canManage && (
+                          <DeleteButton
+                            action={deleteOrder.bind(null, order.id)}
+                            confirmTitle={`Eliminar pedido ${order.orderCode}`}
+                            confirmDescription="Esta acción elimina el pedido y su historial de forma permanente. Si el pedido está pendiente, se restaura el stock y el uso del cupón. No se puede deshacer."
+                            title="Eliminar pedido"
+                          />
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
