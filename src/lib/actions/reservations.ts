@@ -19,6 +19,10 @@ export type ReservationResult = {
   orderCode?: string;
   orderId?: string;
   trackingToken?: string;
+  subtotalAmount?: number;
+  discountAmount?: number;
+  totalAmount?: number;
+  couponCode?: string;
 };
 
 export async function createReservation(
@@ -254,6 +258,10 @@ export async function createReservation(
       orderCode: order.orderCode,
       orderId: order.id,
       trackingToken,
+      subtotalAmount,
+      discountAmount: appliedCoupon?.discountAmount ?? 0,
+      totalAmount: finalAmount,
+      couponCode: appliedCoupon?.code,
     };
   } catch (err) {
     if (err instanceof Error && err.message === "CUSTOMER_LOGIN_REQUIRED") {

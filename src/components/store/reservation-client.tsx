@@ -75,6 +75,10 @@ export function ReservationClient({
         bankDetails={bankDetails}
         cryptoDetails={cryptoDetails}
         whatsappNumber={whatsappNumber}
+        subtotalAmount={state.subtotalAmount}
+        discountAmount={state.discountAmount}
+        totalAmount={state.totalAmount ?? priceNumeric}
+        couponCode={state.couponCode}
       />
     );
   }
