@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/constants";
 import { ReservationSuccess } from "@/components/store/reservation-success";
+import { UsdtEquivalent } from "@/components/shared/usdt-equivalent";
 
 interface CustomerData {
   name: string;
@@ -27,6 +28,7 @@ interface ReservationClientProps {
   sizeId: string;
   sizeLabel: string;
   price: string;
+  priceNumeric: number;
   bankDetails: {
     bankName?: string;
     holder?: string;
@@ -54,6 +56,7 @@ export function ReservationClient({
   sizeId,
   sizeLabel,
   price,
+  priceNumeric,
   bankDetails,
   cryptoDetails,
   whatsappNumber,
@@ -92,6 +95,7 @@ export function ReservationClient({
           <p className="text-sm text-gray-text">
             Talle {sizeLabel} · {price}
           </p>
+          <UsdtEquivalent amount={priceNumeric} className="mt-1" />
         </div>
 
         {state.error && (

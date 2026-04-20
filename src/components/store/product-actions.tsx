@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ShoppingBag, Check } from "lucide-react";
 import { SizeSelector } from "@/components/store/size-selector";
 import { FormattedPrice } from "@/components/shared/formatted-price";
+import { UsdtEquivalent } from "@/components/shared/usdt-equivalent";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/store/cart-provider";
 import { WishlistToggleButton } from "@/components/store/wishlist-toggle-button";
@@ -67,7 +68,10 @@ export function ProductActions({
 
   return (
     <div className="space-y-6">
-      <FormattedPrice price={price} compareAtPrice={compareAtPrice} size="lg" />
+      <div>
+        <FormattedPrice price={price} compareAtPrice={compareAtPrice} size="lg" />
+        <UsdtEquivalent amount={price} className="mt-1 text-sm" />
+      </div>
 
       <SizeSelector
         sizes={sizes}

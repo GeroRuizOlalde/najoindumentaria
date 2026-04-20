@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSettings } from "@/lib/queries/settings";
 
 export const revalidate = 300;
 
@@ -60,22 +61,29 @@ async function fetchFromDolarApi(): Promise<CachedRate | null> {
 }
 
 export async function GET() {
+  const { map } = await getSettings();
+  const enabled = map.crypto_enabled?.toLowerCase() === "true";
+
+  if (!enabled) {
+    return NextResponse.json({ enabled: false });
+  }
+
   if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
-    return NextResponse.json(cache);
+    return NextResponse.json({ ...cache, enabled: true });
   }
 
   const fresh = (await fetchFromCriptoYa()) ?? (await fetchFromDolarApi());
   if (fresh) {
     cache = fresh;
-    return NextResponse.json(fresh);
+    return NextResponse.json({ ...fresh, enabled: true });
   }
 
   if (cache) {
-    return NextResponse.json({ ...cache, stale: true });
+    return NextResponse.json({ ...cache, enabled: true, stale: true });
   }
 
   return NextResponse.json(
-    { error: "No se pudo obtener la cotización USDT/ARS" },
+    { enabled: true, error: "No se pudo obtener la cotización USDT/ARS" },
     { status: 503 }
   );
 }

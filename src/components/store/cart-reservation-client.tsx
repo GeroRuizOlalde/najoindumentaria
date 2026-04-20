@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/constants";
 import { ReservationSuccess } from "@/components/store/reservation-success";
+import { UsdtEquivalent } from "@/components/shared/usdt-equivalent";
 import { formatPriceFromDecimal } from "@/lib/utils";
 
 interface CustomerData {
@@ -127,9 +128,12 @@ export function CartReservationClient({
               </span>
             </div>
           ))}
-          <div className="flex justify-between border-t border-border pt-2 font-medium">
+          <div className="flex items-start justify-between border-t border-border pt-2 font-medium">
             <span>Total</span>
-            <span>{formatPriceFromDecimal(totalPrice)}</span>
+            <div className="text-right">
+              <span>{formatPriceFromDecimal(totalPrice)}</span>
+              <UsdtEquivalent amount={totalPrice} className="mt-0.5 font-normal" />
+            </div>
           </div>
         </div>
 

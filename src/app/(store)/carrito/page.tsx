@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/store/cart-provider";
 import { Button } from "@/components/ui/button";
 import { formatPriceFromDecimal } from "@/lib/utils";
+import { UsdtEquivalent } from "@/components/shared/usdt-equivalent";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from "lucide-react";
 
 export default function CarritoPage() {
@@ -113,11 +114,14 @@ export default function CarritoPage() {
 
       {/* Summary */}
       <div className="mt-8 border-t border-border pt-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-start justify-between mb-6">
           <span className="text-sm text-gray-text">Total</span>
-          <span className="text-xl font-bold">
-            {formatPriceFromDecimal(totalPrice)}
-          </span>
+          <div className="text-right">
+            <span className="text-xl font-bold">
+              {formatPriceFromDecimal(totalPrice)}
+            </span>
+            <UsdtEquivalent amount={totalPrice} className="mt-0.5" />
+          </div>
         </div>
 
         <div className="space-y-2">

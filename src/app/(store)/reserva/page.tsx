@@ -99,6 +99,7 @@ export default async function ReservaPage({ searchParams }: Props) {
         sizeId={size.id}
         sizeLabel={size.sizeLabel}
         price={formatPriceFromDecimal(Number(size.product.price))}
+        priceNumeric={Number(size.product.price)}
         bankDetails={bankDetails}
         cryptoDetails={cryptoDetails}
         whatsappNumber={settings.whatsapp_number}
