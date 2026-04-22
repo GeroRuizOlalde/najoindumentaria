@@ -29,8 +29,8 @@ export default async function HomePage() {
         secondaryCtaLabel={settings.content_home_secondary_cta_label || undefined}
         secondaryCtaHref={settings.content_home_secondary_cta_href || undefined}
       />
-      <CategoriesGrid categories={categories} />
       <FeaturedProducts products={featured} />
+      <CategoriesGrid categories={categories} />
       <BrandsCarousel brands={brands} />
       <HowItWorks />
       <BenefitsSection />
